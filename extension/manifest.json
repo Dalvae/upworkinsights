@@ -1,0 +1,32 @@
+{
+  "manifest_version": 2,
+  "name": "Upwork Insights",
+  "version": "1.0.0",
+  "description": "Captures Upwork job data and sends to Upwork Insights dashboard",
+  "permissions": [
+    "webRequest",
+    "webRequestBlocking",
+    "*://*.upwork.com/*",
+    "storage"
+  ],
+  "background": {
+    "scripts": ["background.js"],
+    "persistent": true
+  },
+  "browser_action": {
+    "default_popup": "popup.html",
+    "default_icon": {
+      "48": "icon.png"
+    }
+  },
+  "icons": {
+    "48": "icon.png"
+  },
+  "content_scripts": [
+    {
+      "matches": ["*://*.upwork.com/*"],
+      "js": ["content.js"],
+      "run_at": "document_start"
+    }
+  ]
+}
