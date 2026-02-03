@@ -1,6 +1,7 @@
 <script lang="ts">
   import { api } from '../lib/api';
   import Loading from '../components/Loading.svelte';
+  import UiCheckbox from '../components/ui/UiCheckbox.svelte';
 
   let loading = $state(true);
   let skills = $state('');
@@ -78,15 +79,9 @@
       <div>
         <label class="block text-sm font-medium text-gray-300 mb-2">Preferred Tiers</label>
         <div class="flex gap-4">
-          <label class="flex items-center gap-2 text-sm">
-            <input type="checkbox" bind:checked={tiers.expert} class="rounded bg-gray-800 border-gray-600"> Expert
-          </label>
-          <label class="flex items-center gap-2 text-sm">
-            <input type="checkbox" bind:checked={tiers.intermediate} class="rounded bg-gray-800 border-gray-600"> Intermediate
-          </label>
-          <label class="flex items-center gap-2 text-sm">
-            <input type="checkbox" bind:checked={tiers.entry} class="rounded bg-gray-800 border-gray-600"> Entry Level
-          </label>
+          <UiCheckbox label="Expert" bind:checked={tiers.expert} />
+          <UiCheckbox label="Intermediate" bind:checked={tiers.intermediate} />
+          <UiCheckbox label="Entry Level" bind:checked={tiers.entry} />
         </div>
       </div>
       <div>
