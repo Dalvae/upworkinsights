@@ -1,6 +1,6 @@
 <script lang="ts">
   import { link } from 'svelte-spa-router';
-  import { Progress } from "bits-ui";
+  import { Progress, Separator } from "bits-ui";
   import { api } from '../lib/api';
   import { formatProposals, formatBudget, proposalMidpoint, tierColor, scoreColor, matchBarColor } from '../lib/format';
   import LineChart from '../components/LineChart.svelte';
@@ -141,7 +141,8 @@
         <div class="flex justify-between"><span class="text-gray-400">First Seen</span><span class="text-gray-200">{job.first_seen_at ? new Date(job.first_seen_at).toLocaleString() : '-'}</span></div>
         <div class="flex justify-between"><span class="text-gray-400">Last Seen</span><span class="text-gray-200">{job.last_seen_at ? new Date(job.last_seen_at).toLocaleString() : '-'}</span></div>
         {#if job.total_hired > 0 || job.total_applicants || job.invitations_sent > 0}
-          <div class="border-t border-gray-700 mt-3 pt-3">
+          <Separator.Root class="bg-gray-700 h-px my-3" />
+          <div>
             <div class="text-xs text-gray-500 uppercase mb-2">Hiring Activity</div>
             {#if job.total_applicants}
               <div class="flex justify-between"><span class="text-gray-400">Applicants</span><span class="text-gray-200">{job.total_applicants}</span></div>
@@ -161,7 +162,8 @@
           </div>
         {/if}
         {#if job.client_total_assignments != null || job.client_open_jobs != null}
-          <div class="border-t border-gray-700 mt-3 pt-3">
+          <Separator.Root class="bg-gray-700 h-px my-3" />
+          <div>
             <div class="text-xs text-gray-500 uppercase mb-2">Buyer Stats</div>
             {#if job.client_total_assignments != null}
               <div class="flex justify-between"><span class="text-gray-400">Total Assignments</span><span class="text-gray-200">{job.client_total_assignments}</span></div>
