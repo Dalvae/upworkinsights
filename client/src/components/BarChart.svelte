@@ -3,6 +3,9 @@
   import Svg from '$layerchart/components/layout/Svg.svelte';
   import Axis from '$layerchart/components/Axis.svelte';
   import Bar from '$layerchart/components/Bar.svelte';
+  import Highlight from '$layerchart/components/Highlight.svelte';
+  import TooltipContext from '$layerchart/components/tooltip/TooltipContext.svelte';
+  import TooltipRoot from '$layerchart/components/tooltip/Tooltip.svelte';
   import { scaleBand, scaleLinear } from 'd3-scale';
 
   let {
@@ -25,7 +28,6 @@
 
   const yMax = $derived(Math.max(...data, 0) * 1.1 || 10);
 
-  // Estimate left padding for horizontal bars based on longest label
   const leftPad = $derived(
     horizontal ? Math.min(Math.max(...labels.map(l => l.length * 7), 50), 160) : 48
   );
@@ -42,6 +44,7 @@
       y="category"
       yScale={scaleBand().padding(0.3)}
       padding={{ top: 10, right: 16, bottom: 32, left: leftPad }}
+      tooltip={{ mode: 'band' }}
     >
       <Svg>
         <Axis placement="bottom" classes={{ text: 'fill-gray-400 text-xs' }} />
@@ -49,7 +52,14 @@
         {#each chartData as bar}
           <Bar {bar} fill={color} radius={4} rounded="right" />
         {/each}
+        <Highlight area />
       </Svg>
+      <TooltipRoot let:data>
+        <div class="bg-gray-800 border border-gray-600 text-gray-100 text-xs rounded px-2 py-1 shadow-lg">
+          <div class="font-semibold">{data.category}</div>
+          <div>{label}: <span class="font-mono">{data.value}</span></div>
+        </div>
+      </TooltipRoot>
     </Chart>
   {:else}
     <Chart
@@ -62,6 +72,7 @@
       yNice
       yBaseline={0}
       padding={{ top: 10, right: 16, bottom: 32, left: 48 }}
+      tooltip={{ mode: 'band' }}
     >
       <Svg>
         <Axis placement="bottom" classes={{ text: 'fill-gray-400 text-xs' }} />
@@ -69,7 +80,14 @@
         {#each chartData as bar}
           <Bar {bar} fill={color} radius={4} rounded="top" />
         {/each}
+        <Highlight area />
       </Svg>
+      <TooltipRoot let:data>
+        <div class="bg-gray-800 border border-gray-600 text-gray-100 text-xs rounded px-2 py-1 shadow-lg">
+          <div class="font-semibold">{data.category}</div>
+          <div>{label}: <span class="font-mono">{data.value}</span></div>
+        </div>
+      </TooltipRoot>
     </Chart>
   {/if}
 </div>
