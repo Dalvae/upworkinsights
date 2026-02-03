@@ -24,7 +24,6 @@ export function normalizeJob(raw: RawUpworkJob, sourceUrl?: string | null, searc
   const jobType = parseJobType(raw.type);
 
   return {
-    id: parseInt(raw.uid),
     ciphertext: raw.ciphertext,
     title: stripHtml(raw.title),
     description: stripHtml(raw.description),

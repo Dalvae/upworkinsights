@@ -44,7 +44,7 @@ export type Tier = 'expert' | 'intermediate' | 'entry';
 export type EngagementType = 'full_time' | 'part_time' | null;
 
 export interface Job {
-  id: number;
+  id?: number;
   ciphertext: string;
   title: string;
   description: string;

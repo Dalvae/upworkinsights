@@ -109,7 +109,7 @@ async function handleGraphQLResponse(data, operationName) {
     });
 
     const result = await response.json();
-    console.log('[UpworkInsights] Sent', result.inserted, 'jobs');
+    console.log('[UpworkInsights] Result:', result.inserted, 'new,', result.updated, 'updated,', result.errors, 'errors (of', result.received, 'received)');
 
     browser.browserAction.setBadgeText({ text: String(capturedCount) });
     browser.browserAction.setBadgeBackgroundColor({ color: '#4CAF50' });
