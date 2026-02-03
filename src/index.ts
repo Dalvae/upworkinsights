@@ -43,6 +43,21 @@ app.use('*', async (c, next) => {
   await next();
 });
 
+// Cache read-only analytics and jobs list endpoints
+app.use('/api/analytics/*', async (c, next) => {
+  await next();
+  if (c.req.method === 'GET' && c.res.status === 200) {
+    c.header('Cache-Control', 'public, max-age=60, stale-while-revalidate=300');
+  }
+});
+
+app.use('/api/jobs', async (c, next) => {
+  await next();
+  if (c.req.method === 'GET' && c.res.status === 200) {
+    c.header('Cache-Control', 'public, max-age=30, stale-while-revalidate=120');
+  }
+});
+
 app.route('/api', ingestRoutes);
 app.route('/api', jobRoutes);
 app.route('/api', analyticsRoutes);
