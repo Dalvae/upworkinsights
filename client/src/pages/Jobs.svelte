@@ -221,5 +221,5 @@
     </div>
   </div>
 
-  <Pagination page={pagination.page} pages={pagination.pages} onPageChange={handlePageChange} />
+  <Pagination page={pagination.page} total={pagination.total} perPage={parseInt(currentLimit)} onPageChange={handlePageChange} />
 </div>

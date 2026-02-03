@@ -1,44 +1,58 @@
 <script lang="ts">
+  import { Pagination } from "bits-ui";
+
   let {
-    page,
-    pages,
+    page = $bindable(1),
+    total,
+    perPage,
     onPageChange,
   }: {
-    page: number;
-    pages: number;
+    page?: number;
+    total: number;
+    perPage: number;
     onPageChange: (p: number) => void;
   } = $props();
-
-  let visiblePages = $derived.by(() => {
-    const start = Math.max(1, page - 2);
-    const end = Math.min(pages, page + 2);
-    const result: number[] = [];
-    for (let i = start; i <= end; i++) result.push(i);
-    return result;
-  });
 </script>
 
-{#if pages > 1}
-  <div class="mt-6 flex justify-center gap-2">
-    {#if page > 1}
-      <button
-        onclick={() => onPageChange(page - 1)}
-        class="px-3 py-1.5 bg-gray-800 rounded text-sm hover:bg-gray-700 transition-colors"
-      >Prev</button>
-    {/if}
+{#if total > perPage}
+  <Pagination.Root
+    count={total}
+    {perPage}
+    bind:page
+    siblingCount={2}
+    onPageChange={(p) => onPageChange(p)}
+  >
+    {#snippet children({ pages })}
+      <div class="mt-6 flex justify-center gap-1">
+        <Pagination.PrevButton
+          class="px-3 py-1.5 text-sm rounded bg-gray-800 text-gray-300
+                 hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          Prev
+        </Pagination.PrevButton>
 
-    {#each visiblePages as p}
-      <button
-        onclick={() => onPageChange(p)}
-        class="px-3 py-1.5 rounded text-sm transition-colors {p === page ? 'bg-blue-600 text-white' : 'bg-gray-800 hover:bg-gray-700'}"
-      >{p}</button>
-    {/each}
+        {#each pages as p (p.key)}
+          {#if p.type === "ellipsis"}
+            <span class="px-2 py-1.5 text-gray-500">...</span>
+          {:else}
+            <Pagination.Page
+              page={p}
+              class="px-3 py-1.5 text-sm rounded cursor-pointer
+                     data-[selected]:bg-blue-600 data-[selected]:text-white
+                     bg-gray-800 text-gray-300 hover:bg-gray-700"
+            >
+              {p.value}
+            </Pagination.Page>
+          {/if}
+        {/each}
 
-    {#if page < pages}
-      <button
-        onclick={() => onPageChange(page + 1)}
-        class="px-3 py-1.5 bg-gray-800 rounded text-sm hover:bg-gray-700 transition-colors"
-      >Next</button>
-    {/if}
-  </div>
+        <Pagination.NextButton
+          class="px-3 py-1.5 text-sm rounded bg-gray-800 text-gray-300
+                 hover:bg-gray-700 disabled:opacity-40 disabled:cursor-not-allowed"
+        >
+          Next
+        </Pagination.NextButton>
+      </div>
+    {/snippet}
+  </Pagination.Root>
 {/if}
