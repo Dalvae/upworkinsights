@@ -21,8 +21,8 @@
   let chart: Chart | undefined;
 
   $effect(() => {
-    const l = labels;
-    const d = data;
+    const l = $state.snapshot(labels) as string[];
+    const d = $state.snapshot(data) as number[];
 
     untrack(() => {
       if (chart) {

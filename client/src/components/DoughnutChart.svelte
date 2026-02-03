@@ -17,8 +17,9 @@
   let chart: Chart | undefined;
 
   $effect(() => {
-    const l = labels;
-    const d = data;
+    const l = $state.snapshot(labels) as string[];
+    const d = $state.snapshot(data) as number[];
+    const c = colors ? $state.snapshot(colors) as string[] : undefined;
 
     untrack(() => {
       if (chart) {
@@ -28,7 +29,7 @@
     });
 
     if (canvas && l.length > 0) {
-      chart = createDoughnutChart(canvas, l, d, colors);
+      chart = createDoughnutChart(canvas, l, d, c);
     }
 
     return () => {
