@@ -8,10 +8,7 @@ import {
 export function createSvelteTable<TData extends RowData>(
   options: TableOptions<TData>
 ) {
-  const resolvedOptions: TableOptionsResolved<TData> = mergeOptions(options);
-
-  const table = createTable(resolvedOptions);
-  let state = $state(table.initialState);
+  let state = $state({} as any);
 
   function mergeOptions(opts: TableOptions<TData>): TableOptionsResolved<TData> {
     return {
@@ -31,6 +28,10 @@ export function createSvelteTable<TData extends RowData>(
       renderFallbackValue: opts.renderFallbackValue ?? null,
     } as TableOptionsResolved<TData>;
   }
+
+  const resolvedOptions: TableOptionsResolved<TData> = mergeOptions(options);
+  const table = createTable(resolvedOptions);
+  state = table.initialState;
 
   function setOptions() {
     table.setOptions((prev) => mergeOptions({ ...prev, ...options }));
