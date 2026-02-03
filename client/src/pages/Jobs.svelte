@@ -26,6 +26,9 @@
   let filterType = $state('');
   let filterCountry = $state('');
   let searchTimer: any;
+  $effect(() => {
+    return () => clearTimeout(searchTimer);
+  });
 
   // --- Data state ---
   let jobs = $state<any[]>([]);
