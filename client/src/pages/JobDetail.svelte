@@ -1,6 +1,6 @@
 <script lang="ts">
   import { link } from 'svelte-spa-router';
-  import { Collapsible, Progress, Separator } from "bits-ui";
+  import { Collapsible, Meter, Progress, Separator } from "bits-ui";
   import { api } from '../lib/api';
   import { formatProposals, formatBudget, proposalMidpoint, tierColor, scoreColor, matchBarColor } from '../lib/format';
   import LineChart from '../components/LineChart.svelte';
@@ -28,6 +28,13 @@
     job?.match_score >= 70 ? 'text-green-400' : job?.match_score >= 40 ? 'text-yellow-400' : 'text-gray-400'
   );
   let matchBar = $derived(matchBarColor(job?.match_score || 0));
+
+  function meterColor(value: number, max: number): string {
+    const pct = value / max;
+    if (pct >= 0.7) return 'bg-green-500';
+    if (pct >= 0.4) return 'bg-yellow-500';
+    return 'bg-red-500';
+  }
 
   async function load() {
     try {
@@ -133,11 +140,45 @@
     <div class="bg-gray-900 rounded-lg p-5 border border-gray-800">
       <h3 class="text-lg font-semibold mb-4">Client Info</h3>
       <div class="space-y-3">
-        <div class="flex justify-between"><span class="text-gray-400">Quality Score</span><span class="{scColor} font-semibold text-lg">{score}/10</span></div>
+        <div>
+          <div class="flex justify-between mb-1"><span class="text-gray-400">Quality Score</span><span class="{scColor} font-semibold text-lg">{score}/10</span></div>
+          <Meter.Root
+            value={Number(job.client_quality_score) || 0}
+            min={0}
+            max={10}
+            aria-label="Client quality score"
+            class="w-full bg-gray-800 rounded-full h-2 overflow-hidden"
+          >
+            {#snippet children({ value, min, max })}
+              <div
+                class="h-full rounded-full {meterColor(value, max)}"
+                style="width: {((value - min) / (max - min)) * 100}%"
+              ></div>
+            {/snippet}
+          </Meter.Root>
+        </div>
         <div class="flex justify-between"><span class="text-gray-400">Payment Verified</span><span>{#if job.client_payment_verified}<span class="text-green-400">Yes</span>{:else}<span class="text-red-400">No</span>{/if}</span></div>
         <div class="flex justify-between"><span class="text-gray-400">Total Spent</span><span class="text-gray-200">${(parseFloat(job.client_total_spent) || 0).toLocaleString()}</span></div>
         <div class="flex justify-between"><span class="text-gray-400">Reviews</span><span class="text-gray-200">{job.client_total_reviews || 0}</span></div>
-        <div class="flex justify-between"><span class="text-gray-400">Feedback</span><span class="text-gray-200">{job.client_total_feedback ? parseFloat(job.client_total_feedback).toFixed(1) : '-'}/5</span></div>
+        <div>
+          <div class="flex justify-between mb-1"><span class="text-gray-400">Feedback</span><span class="text-gray-200">{job.client_total_feedback ? parseFloat(job.client_total_feedback).toFixed(1) : '-'}/5</span></div>
+          {#if job.client_total_feedback}
+            <Meter.Root
+              value={Number(job.client_total_feedback) || 0}
+              min={0}
+              max={5}
+              aria-label="Client feedback score"
+              class="w-full bg-gray-800 rounded-full h-2 overflow-hidden"
+            >
+              {#snippet children({ value, min, max })}
+                <div
+                  class="h-full rounded-full {meterColor(value, max)}"
+                  style="width: {((value - min) / (max - min)) * 100}%"
+                ></div>
+              {/snippet}
+            </Meter.Root>
+          {/if}
+        </div>
         <div class="flex justify-between"><span class="text-gray-400">First Seen</span><span class="text-gray-200">{job.first_seen_at ? new Date(job.first_seen_at).toLocaleString() : '-'}</span></div>
         <div class="flex justify-between"><span class="text-gray-400">Last Seen</span><span class="text-gray-200">{job.last_seen_at ? new Date(job.last_seen_at).toLocaleString() : '-'}</span></div>
         {#if job.total_hired > 0 || job.total_applicants || job.invitations_sent > 0}
