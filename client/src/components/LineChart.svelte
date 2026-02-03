@@ -3,7 +3,7 @@
   import Svg from '$layerchart/components/layout/Svg.svelte';
   import Axis from '$layerchart/components/Axis.svelte';
   import Area from '$layerchart/components/Area.svelte';
-  import Line from '$layerchart/components/Line.svelte';
+  import Spline from '$layerchart/components/Spline.svelte';
   import { scalePoint, scaleLinear } from 'd3-scale';
   import { curveMonotoneX } from 'd3-shape';
 
@@ -26,39 +26,42 @@
     })
   );
 
-  // Compute y domain from all dataset values
   const yMax = $derived(
     Math.max(...datasets.flatMap((ds) => ds.data), 0) * 1.1 || 10
   );
 </script>
 
 <div class="h-full w-full">
-  <Chart
-    data={chartData}
-    x="label"
-    xScale={scalePoint()}
-    y="ds0"
-    yScale={scaleLinear()}
-    yDomain={[0, yMax]}
-    yNice
-    padding={{ top: 10, right: 16, bottom: 32, left: 48 }}
-  >
-    <Svg>
-      <Axis placement="bottom" classes={{ text: 'fill-gray-400 text-xs' }} />
-      <Axis placement="left" classes={{ text: 'fill-gray-400 text-xs' }} grid={{ class: 'stroke-gray-700' }} />
-      {#each datasets as ds, di}
-        <Area
-          y={`ds${di}`}
-          fill={ds.color.replace(/[\d.]+\)$/g, '0.1)')}
-          curve={curveMonotoneX}
-        />
-        <Line
-          y={`ds${di}`}
-          stroke={ds.color}
-          strokeWidth={2}
-          curve={curveMonotoneX}
-        />
-      {/each}
-    </Svg>
-  </Chart>
+  {#each datasets as ds, di}
+    {#if di === 0}
+      <Chart
+        data={chartData}
+        x="label"
+        xScale={scalePoint()}
+        y={`ds${di}`}
+        yScale={scaleLinear()}
+        yDomain={[0, yMax]}
+        yNice
+        padding={{ top: 10, right: 16, bottom: 32, left: 48 }}
+      >
+        <Svg>
+          <Axis placement="bottom" classes={{ text: 'fill-gray-400 text-xs' }} />
+          <Axis placement="left" classes={{ text: 'fill-gray-400 text-xs' }} grid={{ class: 'stroke-gray-700' }} />
+          {#each datasets as innerDs, innerDi}
+            <Area
+              y1={d => d[`ds${innerDi}`]}
+              fill={innerDs.color.replace(/[\d.]+\)$/g, '0.15)')}
+              curve={curveMonotoneX}
+            />
+            <Spline
+              y={d => d[`ds${innerDi}`]}
+              stroke={innerDs.color}
+              strokeWidth={2}
+              curve={curveMonotoneX}
+            />
+          {/each}
+        </Svg>
+      </Chart>
+    {/if}
+  {/each}
 </div>

@@ -24,6 +24,11 @@
   );
 
   const yMax = $derived(Math.max(...data, 0) * 1.1 || 10);
+
+  // Estimate left padding for horizontal bars based on longest label
+  const leftPad = $derived(
+    horizontal ? Math.min(Math.max(...labels.map(l => l.length * 7), 50), 160) : 48
+  );
 </script>
 
 <div class="h-full w-full">
@@ -36,7 +41,7 @@
       xNice
       y="category"
       yScale={scaleBand().padding(0.3)}
-      padding={{ top: 10, right: 16, bottom: 32, left: 80 }}
+      padding={{ top: 10, right: 16, bottom: 32, left: leftPad }}
     >
       <Svg>
         <Axis placement="bottom" classes={{ text: 'fill-gray-400 text-xs' }} />

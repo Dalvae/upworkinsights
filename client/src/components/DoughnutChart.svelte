@@ -37,12 +37,18 @@
 </script>
 
 <div class="h-full w-full">
-  <Chart data={chartData}>
+  <Chart data={chartData} x="value">
     <Svg>
       <Group center>
-        <Pie value="value" innerRadius={0.6} let:arcs>
+        <Pie innerRadius={0.6} let:arcs>
           {#each arcs as arc}
-            <Arc {arc} fill={colorScale(arc.data.category)} stroke="none" />
+            <Arc
+              startAngle={arc.startAngle}
+              endAngle={arc.endAngle}
+              padAngle={arc.padAngle}
+              innerRadius={0.6}
+              fill={colorScale(arc.data.category)}
+            />
           {/each}
         </Pie>
       </Group>
