@@ -98,7 +98,10 @@ async function loadJobs() {
       return `
       <tr class="hover:bg-gray-800/50 transition-colors">
         <td class="px-4 py-3">
-          <a href="/jobs/${job.id}" class="font-medium text-gray-100 hover:text-blue-400 truncate max-w-md block transition-colors" title="${job.title}">${job.title}</a>
+          <div class="flex items-center gap-2">
+            <a href="/jobs/${job.id}" class="font-medium text-gray-100 hover:text-blue-400 truncate max-w-md block transition-colors" title="${job.title}">${job.title}</a>
+            <a href="https://www.upwork.com/jobs/${job.ciphertext}" target="_blank" rel="noopener" class="text-gray-600 hover:text-blue-400 shrink-0" title="View on Upwork">&#8599;</a>
+          </div>
           <p class="text-xs text-gray-500 mt-0.5 line-clamp-1 max-w-lg">${desc}</p>
           <div class="flex gap-1 mt-1">
             ${skills.map((s: string) => `<span class="text-xs bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded">${s}</span>`).join('')}

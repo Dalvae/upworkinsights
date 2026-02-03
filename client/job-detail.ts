@@ -41,7 +41,17 @@ async function init() {
     document.getElementById('job-content')!.classList.remove('hidden');
 
     // Title and budget
-    document.getElementById('job-title')!.textContent = job.title;
+    const titleEl = document.getElementById('job-title')!;
+    titleEl.textContent = job.title;
+    if (job.ciphertext) {
+      const link = document.createElement('a');
+      link.href = `https://www.upwork.com/jobs/${job.ciphertext}`;
+      link.target = '_blank';
+      link.rel = 'noopener';
+      link.className = 'text-gray-500 hover:text-blue-400 ml-2 text-base';
+      link.textContent = '↗ View on Upwork';
+      titleEl.appendChild(link);
+    }
     const budget = job.job_type === 'fixed'
       ? job.fixed_budget ? `$${parseFloat(job.fixed_budget).toLocaleString()}` : 'N/A'
       : job.hourly_min && job.hourly_max ? `$${job.hourly_min}-$${job.hourly_max}/hr` : 'N/A';

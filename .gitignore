@@ -9,3 +9,4 @@ wrangler.toml
 .DS_Store
 data/
 .omc/
+web-ext-artifacts/
