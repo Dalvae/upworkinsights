@@ -1,6 +1,6 @@
 import { Hono } from 'hono';
 import type { SupabaseClient } from '@supabase/supabase-js';
-import { normalizeJob, extractSkills } from '../lib/normalize';
+import { normalizeJob, extractSkills, BLOCKED_COUNTRIES } from '../lib/normalize';
 import type { IngestPayload, RawUpworkJob } from '../types';
 import { requireApiKey } from '../middleware/auth';
 
@@ -36,6 +36,9 @@ function isValidRawJob(raw: unknown): raw is RawUpworkJob {
 
 async function upsertJobAndSkills(db: SupabaseClient, raw: RawUpworkJob, sourceUrl?: string | null) {
   const job = normalizeJob(raw, sourceUrl, null);
+  if (job.client_country && BLOCKED_COUNTRIES.has(job.client_country)) {
+    return { isNew: false, blocked: true };
+  }
   const skills = extractSkills(raw);
 
   // Check if job already exists to detect changes
@@ -168,7 +171,7 @@ async function upsertJobAndSkills(db: SupabaseClient, raw: RawUpworkJob, sourceU
     );
   }
 
-  return { isNew: !existing };
+  return { isNew: !existing, blocked: false };
 }
 
 app.post('/ingest', requireApiKey(), async (c) => {
@@ -188,10 +191,12 @@ app.post('/ingest', requireApiKey(), async (c) => {
 
   let inserted = 0;
   let updated = 0;
+  let blocked = 0;
   let errors = invalidCount;
   for (const r of results) {
     if (r.status === 'fulfilled') {
-      if (r.value.isNew) inserted++;
+      if (r.value.blocked) blocked++;
+      else if (r.value.isNew) inserted++;
       else updated++;
     } else {
       console.error('Ingest error:', r.reason);
@@ -199,7 +204,7 @@ app.post('/ingest', requireApiKey(), async (c) => {
     }
   }
 
-  return c.json({ ok: true, received: payload.jobs.length, inserted, updated, errors });
+  return c.json({ ok: true, received: payload.jobs.length, inserted, updated, blocked, errors });
 });
 
 app.post('/import/bulk', requireApiKey(), async (c) => {

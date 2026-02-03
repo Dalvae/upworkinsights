@@ -6,6 +6,9 @@ function stripHtml(text: string): string {
   return text.replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
 }
 
+/** Countries to silently reject during ingest. */
+export const BLOCKED_COUNTRIES = new Set(['India', 'Israel']);
+
 /** Maps ISO 3166-1 alpha-2/alpha-3 codes and common aliases to canonical country names. */
 const COUNTRY_ALIASES: Record<string, string> = {
   'US': 'United States', 'USA': 'United States',
@@ -52,6 +55,7 @@ const COUNTRY_ALIASES: Record<string, string> = {
   'NZ': 'New Zealand', 'NZL': 'New Zealand',
   'AE': 'United Arab Emirates', 'ARE': 'United Arab Emirates', 'UAE': 'United Arab Emirates',
   'SA': 'Saudi Arabia', 'SAU': 'Saudi Arabia',
+  'HK': 'Hong Kong', 'HKG': 'Hong Kong',
 };
 
 function normalizeCountry(country: string | undefined | null): string | null {
