@@ -34,6 +34,7 @@ export const api = {
     return fetchJSON<any>(`/api/jobs?${qs}`);
   },
   getJob: (id: string) => fetchJSON<any>(`/api/jobs/${id}`),
+  getCountries: () => fetchJSON<any>('/api/jobs/countries'),
   getSkills: (limit = 30) => fetchJSON<any>(`/api/analytics/skills?limit=${limit}`),
   getBudgets: () => fetchJSON<any>('/api/analytics/budgets'),
   getMatches: (limit = 20) => fetchJSON<any>(`/api/analytics/matches?limit=${limit}`),

@@ -54,6 +54,27 @@ app.get('/jobs', async (c) => {
   });
 });
 
+app.get('/jobs/countries', async (c) => {
+  const db = c.get('db');
+  const { data } = await db
+    .from('jobs')
+    .select('client_country')
+    .not('client_country', 'is', null);
+
+  const counts: Record<string, number> = {};
+  for (const row of data ?? []) {
+    const country = row.client_country as string;
+    counts[country] = (counts[country] || 0) + 1;
+  }
+
+  const countries = Object.entries(counts)
+    .sort((a, b) => b[1] - a[1])
+    .slice(0, 20)
+    .map(([country, count]) => ({ country, count }));
+
+  return c.json({ countries });
+});
+
 app.get('/jobs/:id', async (c) => {
   const db = c.get('db');
   const id = c.req.param('id');

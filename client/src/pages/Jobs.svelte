@@ -155,8 +155,8 @@
   }
 
   async function loadCountries() {
-    const data = await api.getOverview();
-    countries = data.top_countries || [];
+    const data = await api.getCountries();
+    countries = data.countries || [];
   }
 
   let countryOptions = $derived([
