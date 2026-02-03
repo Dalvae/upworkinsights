@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Chart } from 'chart.js';
-  import { createLineChart } from '../lib/charts';
+  import { createLineChart, updateLineChart } from '../lib/charts';
   import { untrack } from 'svelte';
 
   let {
@@ -18,16 +18,15 @@
     const l = $state.snapshot(labels) as string[];
     const d = $state.snapshot(datasets) as { label: string; data: number[]; color: string }[];
 
+    if (!canvas || l.length === 0) return;
+
     untrack(() => {
       if (chart) {
-        chart.destroy();
-        chart = undefined;
+        updateLineChart(chart, l, d);
+      } else {
+        chart = createLineChart(canvas, l, d);
       }
     });
-
-    if (canvas && l.length > 0) {
-      chart = createLineChart(canvas, l, d);
-    }
 
     return () => {
       chart?.destroy();

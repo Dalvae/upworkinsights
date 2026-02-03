@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Chart } from 'chart.js';
-  import { createBarChart } from '../lib/charts';
+  import { createBarChart, updateBarChart } from '../lib/charts';
   import { untrack } from 'svelte';
 
   let {
@@ -24,16 +24,15 @@
     const l = $state.snapshot(labels) as string[];
     const d = $state.snapshot(data) as number[];
 
+    if (!canvas || l.length === 0) return;
+
     untrack(() => {
       if (chart) {
-        chart.destroy();
-        chart = undefined;
+        updateBarChart(chart, l, d);
+      } else {
+        chart = createBarChart(canvas, l, d, { color, horizontal, label });
       }
     });
-
-    if (canvas && l.length > 0) {
-      chart = createBarChart(canvas, l, d, { color, horizontal, label });
-    }
 
     return () => {
       chart?.destroy();

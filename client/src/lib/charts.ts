@@ -60,6 +60,16 @@ export function createBarChart(
   });
 }
 
+export function updateBarChart(
+  chart: Chart,
+  labels: string[],
+  data: number[],
+): void {
+  chart.data.labels = labels;
+  chart.data.datasets[0].data = data;
+  chart.update();
+}
+
 export function createDoughnutChart(
   canvas: HTMLCanvasElement,
   labels: string[],
@@ -98,6 +108,16 @@ export function createDoughnutChart(
   });
 }
 
+export function updateDoughnutChart(
+  chart: Chart,
+  labels: string[],
+  data: number[],
+): void {
+  chart.data.labels = labels;
+  chart.data.datasets[0].data = data;
+  chart.update();
+}
+
 export function createLineChart(
   canvas: HTMLCanvasElement,
   labels: string[],
@@ -130,4 +150,22 @@ export function createLineChart(
       },
     },
   });
+}
+
+export function updateLineChart(
+  chart: Chart,
+  labels: string[],
+  datasets: { label: string; data: number[]; color: string }[],
+): void {
+  chart.data.labels = labels;
+  chart.data.datasets = datasets.map((ds) => ({
+    label: ds.label,
+    data: ds.data,
+    borderColor: ds.color,
+    backgroundColor: ds.color.replace(/[\d.]+\)$/g, '0.1)'),
+    tension: 0.3,
+    fill: true,
+    pointRadius: 2,
+  }));
+  chart.update();
 }

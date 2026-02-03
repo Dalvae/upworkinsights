@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { Chart } from 'chart.js';
-  import { createDoughnutChart } from '../lib/charts';
+  import { createDoughnutChart, updateDoughnutChart } from '../lib/charts';
   import { untrack } from 'svelte';
 
   let {
@@ -19,18 +19,17 @@
   $effect(() => {
     const l = $state.snapshot(labels) as string[];
     const d = $state.snapshot(data) as number[];
-    const c = colors ? $state.snapshot(colors) as string[] : undefined;
+
+    if (!canvas || l.length === 0) return;
 
     untrack(() => {
       if (chart) {
-        chart.destroy();
-        chart = undefined;
+        updateDoughnutChart(chart, l, d);
+      } else {
+        const c = colors ? $state.snapshot(colors) as string[] : undefined;
+        chart = createDoughnutChart(canvas, l, d, c);
       }
     });
-
-    if (canvas && l.length > 0) {
-      chart = createDoughnutChart(canvas, l, d, c);
-    }
 
     return () => {
       chart?.destroy();
