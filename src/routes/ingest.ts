@@ -8,6 +8,22 @@ type Env = { Variables: { db: SupabaseClient; serviceDb: SupabaseClient } };
 
 const app = new Hono<Env>();
 
+const INGEST_CONCURRENCY = 10;
+
+async function processInBatches<T, R>(
+  items: T[],
+  concurrency: number,
+  fn: (item: T) => Promise<R>,
+): Promise<PromiseSettledResult<R>[]> {
+  const results: PromiseSettledResult<R>[] = [];
+  for (let i = 0; i < items.length; i += concurrency) {
+    const batch = items.slice(i, i + concurrency);
+    const batchResults = await Promise.allSettled(batch.map(fn));
+    results.push(...batchResults);
+  }
+  return results;
+}
+
 function isValidRawJob(raw: unknown): raw is RawUpworkJob {
   if (!raw || typeof raw !== 'object') return false;
   const r = raw as Record<string, unknown>;
@@ -163,21 +179,22 @@ app.post('/ingest', requireApiKey(), async (c) => {
     return c.json({ error: 'Invalid payload: jobs array required' }, 400);
   }
 
+  const validJobs = payload.jobs.filter(isValidRawJob);
+  const invalidCount = payload.jobs.length - validJobs.length;
+
+  const results = await processInBatches(validJobs, INGEST_CONCURRENCY, (raw) =>
+    upsertJobAndSkills(db, raw, payload.url),
+  );
+
   let inserted = 0;
   let updated = 0;
-  let errors = 0;
-
-  for (const raw of payload.jobs) {
-    if (!isValidRawJob(raw)) {
-      errors++;
-      continue;
-    }
-    try {
-      const result = await upsertJobAndSkills(db, raw, payload.url);
-      if (result.isNew) inserted++;
+  let errors = invalidCount;
+  for (const r of results) {
+    if (r.status === 'fulfilled') {
+      if (r.value.isNew) inserted++;
       else updated++;
-    } catch (e) {
-      console.error('Ingest error:', e);
+    } else {
+      console.error('Ingest error:', r.reason);
       errors++;
     }
   }
@@ -205,19 +222,19 @@ app.post('/import/bulk', requireApiKey(), async (c) => {
     return c.json({ error: 'No jobs found in payload' }, 400);
   }
 
-  let inserted = 0;
-  let errors = 0;
+  const validJobs = allJobs.filter(isValidRawJob);
+  const invalidCount = allJobs.length - validJobs.length;
 
-  for (const raw of allJobs) {
-    if (!isValidRawJob(raw)) {
-      errors++;
-      continue;
-    }
-    try {
-      await upsertJobAndSkills(db, raw, sourceUrl);
-      inserted++;
-    } catch (e) {
-      console.error('Bulk import error:', e);
+  const results = await processInBatches(validJobs, INGEST_CONCURRENCY, (raw) =>
+    upsertJobAndSkills(db, raw, sourceUrl),
+  );
+
+  let inserted = 0;
+  let errors = invalidCount;
+  for (const r of results) {
+    if (r.status === 'fulfilled') inserted++;
+    else {
+      console.error('Bulk import error:', r.reason);
       errors++;
     }
   }

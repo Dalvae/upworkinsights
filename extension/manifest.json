@@ -6,7 +6,7 @@
       "id": "{7fbda493-793b-44d1-9664-8030064c31c4}"
     }
   },
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Captures Upwork job data and sends to Upwork Insights dashboard",
   "permissions": [
     "webRequest",
