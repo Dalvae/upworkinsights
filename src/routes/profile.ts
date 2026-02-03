@@ -17,7 +17,7 @@ app.get('/profile', async (c) => {
   return c.json(safeProfile);
 });
 
-app.put('/profile', requireApiKey(), async (c) => {
+app.put('/profile', async (c) => {
   const db = c.get('serviceDb');
   const body = await c.req.json();
 

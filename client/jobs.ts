@@ -1,5 +1,18 @@
 import { api } from './lib/api';
 
+function formatProposals(tier: string | null): string {
+  if (!tier) return '-';
+  const lower = tier.toLowerCase();
+  if (lower.includes('lessthan5') || lower.includes('less_than_5')) return '< 5';
+  if (lower.includes('5to10') || lower.includes('5_to_10')) return '5-10';
+  if (lower.includes('10to15') || lower.includes('10_to_15')) return '10-15';
+  if (lower.includes('15to20') || lower.includes('15_to_20')) return '15-20';
+  if (lower.includes('20to50') || lower.includes('20_to_50')) return '20-50';
+  if (lower.includes('50plus') || lower.includes('50_plus') || lower.includes('50+')) return '50+';
+  if (tier.startsWith('Less')) return '< 5';
+  return tier;
+}
+
 let currentPage = 1;
 let currentFilters: Record<string, string> = {};
 let currentSort = 'created_on';
@@ -47,7 +60,7 @@ async function loadJobs() {
   countEl.textContent = `${data.pagination.total} jobs found`;
 
   if (data.jobs.length === 0) {
-    tbody.innerHTML = '<tr><td colspan="7" class="text-center text-gray-500 py-12">No jobs found</td></tr>';
+    tbody.innerHTML = '<tr><td colspan="8" class="text-center text-gray-500 py-12">No jobs found</td></tr>';
     document.getElementById('pagination')!.innerHTML = '';
     return;
   }
@@ -78,10 +91,15 @@ async function loadJobs() {
         .filter(Boolean)
         .slice(0, 3);
 
+      const desc = job.description
+        ? job.description.slice(0, 120) + (job.description.length > 120 ? '...' : '')
+        : '';
+
       return `
       <tr class="hover:bg-gray-800/50 transition-colors">
         <td class="px-4 py-3">
           <a href="/jobs/${job.id}" class="font-medium text-gray-100 hover:text-blue-400 truncate max-w-md block transition-colors" title="${job.title}">${job.title}</a>
+          <p class="text-xs text-gray-500 mt-0.5 line-clamp-1 max-w-lg">${desc}</p>
           <div class="flex gap-1 mt-1">
             ${skills.map((s: string) => `<span class="text-xs bg-gray-800 text-gray-400 px-1.5 py-0.5 rounded">${s}</span>`).join('')}
           </div>
@@ -92,6 +110,7 @@ async function loadJobs() {
         </td>
         <td class="px-4 py-3 text-gray-400 capitalize">${job.job_type}</td>
         <td class="px-4 py-3 text-gray-400">${job.client_country || '-'}</td>
+        <td class="px-4 py-3 text-gray-400">${formatProposals(job.proposals_tier)}</td>
         <td class="px-4 py-3 ${scoreColor} font-medium">${score}/10</td>
         <td class="px-4 py-3 text-gray-400 whitespace-nowrap">${date}</td>
       </tr>

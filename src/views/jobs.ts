@@ -49,6 +49,9 @@ export function jobsPage() {
                 <th class="px-4 py-3 cursor-pointer hover:text-gray-200 select-none w-32" data-sort="client_country">
                   Country <span class="sort-icon"></span>
                 </th>
+                <th class="px-4 py-3 cursor-pointer hover:text-gray-200 select-none w-28" data-sort="proposals_tier">
+                  Proposals <span class="sort-icon"></span>
+                </th>
                 <th class="px-4 py-3 cursor-pointer hover:text-gray-200 select-none w-24" data-sort="client_quality_score">
                   Client <span class="sort-icon"></span>
                 </th>

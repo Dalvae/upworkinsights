@@ -1,6 +1,11 @@
 {
   "manifest_version": 2,
   "name": "Upwork Insights",
+  "browser_specific_settings": {
+    "gecko": {
+      "id": "{7fbda493-793b-44d1-9664-8030064c31c4}"
+    }
+  },
   "version": "1.0.0",
   "description": "Captures Upwork job data and sends to Upwork Insights dashboard",
   "permissions": [

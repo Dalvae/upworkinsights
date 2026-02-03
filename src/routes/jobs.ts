@@ -14,6 +14,7 @@ const ALLOWED_SORT_COLUMNS = [
   'fixed_budget',
   'hourly_min',
   'hourly_max',
+  'proposals_tier',
 ];
 
 app.get('/jobs', async (c) => {

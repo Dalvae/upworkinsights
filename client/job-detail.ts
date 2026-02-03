@@ -1,6 +1,19 @@
 import { api } from './lib/api';
 import { createLineChart, createBarChart } from './lib/charts';
 
+function formatProposals(tier: string | null): string {
+  if (!tier) return '';
+  const lower = tier.toLowerCase();
+  if (lower.includes('lessthan5') || lower.includes('less_than_5')) return '< 5';
+  if (lower.includes('5to10') || lower.includes('5_to_10')) return '5-10';
+  if (lower.includes('10to15') || lower.includes('10_to_15')) return '10-15';
+  if (lower.includes('15to20') || lower.includes('15_to_20')) return '15-20';
+  if (lower.includes('20to50') || lower.includes('20_to_50')) return '20-50';
+  if (lower.includes('50plus') || lower.includes('50_plus') || lower.includes('50+')) return '50+';
+  if (tier.startsWith('Less')) return '< 5';
+  return tier;
+}
+
 function proposalMidpoint(tier: string | null): number {
   if (!tier) return 0;
   if (tier.includes('Less than 5') || tier === '0') return 2;
@@ -47,7 +60,7 @@ async function init() {
       job.duration ? `<span class="text-gray-400">${job.duration}</span>` : '',
       job.engagement ? `<span class="text-gray-400">${job.engagement.replace('_', ' ')}</span>` : '',
       `<span class="text-gray-400">${job.client_country || 'Unknown'}</span>`,
-      job.proposals_tier ? `<span class="text-yellow-400">Proposals: ${job.proposals_tier}</span>` : '',
+      job.proposals_tier ? `<span class="text-yellow-400">Proposals: ${formatProposals(job.proposals_tier)}</span>` : '',
       `<span class="text-gray-500">${new Date(job.created_on).toLocaleDateString()}</span>`,
     ].filter(Boolean).join('');
 
