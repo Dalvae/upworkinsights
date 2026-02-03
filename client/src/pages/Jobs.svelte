@@ -6,6 +6,7 @@
   import SkillTag from '../components/SkillTag.svelte';
   import Pagination from '../components/Pagination.svelte';
   import UiSelect from '../components/ui/UiSelect.svelte';
+  import UiCombobox from '../components/ui/UiCombobox.svelte';
 
   let currentPage = $state(1);
   let currentSort = $state('created_on');
@@ -145,7 +146,7 @@
       bind:value={filterType}
       placeholder="All Types"
     />
-    <UiSelect
+    <UiCombobox
       options={countryOptions}
       bind:value={filterCountry}
       placeholder="All Countries"
