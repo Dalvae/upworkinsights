@@ -1,12 +1,30 @@
 const BASE = '';
+const cache = new Map<string, { data: unknown; ts: number }>();
+const CACHE_TTL = 60_000; // 1 minute
 
 async function fetchJSON<T>(path: string, options?: RequestInit): Promise<T> {
+  const method = options?.method?.toUpperCase() || 'GET';
+
+  // Only cache GET requests
+  if (method === 'GET') {
+    const cached = cache.get(path);
+    if (cached && Date.now() - cached.ts < CACHE_TTL) {
+      return cached.data as T;
+    }
+  }
+
   const res = await fetch(`${BASE}${path}`, {
     headers: { 'Content-Type': 'application/json' },
     ...options,
   });
   if (!res.ok) throw new Error(`API error: ${res.status}`);
-  return res.json();
+  const data = await res.json();
+
+  if (method === 'GET') {
+    cache.set(path, { data, ts: Date.now() });
+  }
+
+  return data;
 }
 
 export const api = {
