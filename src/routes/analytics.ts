@@ -2,7 +2,7 @@ import { Hono } from 'hono';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { computeMatchScore } from '../lib/matching';
 import { proposalMidpoint } from '../lib/constants';
-import type { Job, JobWithSkills, JobSnapshot, Skill, UserProfile } from '../types';
+import type { Job, JobWithSkills, UserProfile } from '../types';
 
 type Env = { Variables: { db: SupabaseClient } };
 const app = new Hono<Env>();
@@ -10,51 +10,19 @@ const app = new Hono<Env>();
 app.get('/analytics/overview', async (c) => {
   const db = c.get('db');
 
-  const { count: totalJobs } = await db.from('jobs').select('*', { count: 'exact', head: true });
+  const [overviewResult, skillsResult] = await Promise.all([
+    db.rpc('analytics_overview'),
+    db.from('skills').select('uid, label, job_count').order('job_count', { ascending: false }).limit(15),
+  ]);
 
-  const { data: fixedJobs } = await db.from('jobs').select('fixed_budget').eq('job_type', 'fixed').not('fixed_budget', 'is', null);
-  const { count: hourlyCount } = await db.from('jobs').select('*', { count: 'exact', head: true }).eq('job_type', 'hourly');
-
-  const avgFixedBudget =
-    fixedJobs && fixedJobs.length > 0
-      ? fixedJobs.reduce((sum, j) => sum + (Number(j.fixed_budget) || 0), 0) / fixedJobs.length
-      : 0;
-
-  const { data: tierData } = await db.from('jobs').select('tier');
-  const tierBreakdown: Record<string, number> = {};
-  for (const j of tierData ?? []) {
-    const t = (j.tier as string) || 'unknown';
-    tierBreakdown[t] = (tierBreakdown[t] || 0) + 1;
-  }
-
-  const { data: countryData } = await db.from('jobs').select('client_country');
-  const countries: Record<string, number> = {};
-  for (const j of countryData ?? []) {
-    const country = (j.client_country as string) || 'Unknown';
-    countries[country] = (countries[country] || 0) + 1;
-  }
-  const topCountries = Object.entries(countries)
-    .sort((a, b) => b[1] - a[1])
-    .slice(0, 10)
-    .map(([country, count]) => ({ country, count }));
-
-  const { data: topSkills } = await db.from('skills').select('uid, label, job_count').order('job_count', { ascending: false }).limit(15);
-
-  const today = new Date().toISOString().split('T')[0];
-  const { count: jobsToday } = await db
-    .from('jobs')
-    .select('*', { count: 'exact', head: true })
-    .gte('first_seen_at', today);
+  const overview = overviewResult.data ?? {
+    total_jobs: 0, jobs_today: 0, avg_fixed_budget: 0,
+    fixed_count: 0, hourly_count: 0, tier_breakdown: {}, top_countries: [],
+  };
 
   return c.json({
-    total_jobs: totalJobs || 0,
-    jobs_today: jobsToday || 0,
-    avg_fixed_budget: Math.round(avgFixedBudget * 100) / 100,
-    fixed_count: fixedJobs?.length || 0,
-    hourly_count: hourlyCount || 0,
-    tier_breakdown: tierBreakdown,
-    top_countries: topCountries,
-    top_skills: topSkills || [],
+    ...overview,
+    top_skills: skillsResult.data || [],
   });
 });
 
@@ -73,49 +41,8 @@ app.get('/analytics/skills', async (c) => {
 
 app.get('/analytics/budgets', async (c) => {
   const db = c.get('db');
-
-  const { data: fixedJobs } = await db.from('jobs').select('fixed_budget').eq('job_type', 'fixed').not('fixed_budget', 'is', null);
-
-  const ranges = [
-    { label: '$0-100', min: 0, max: 100 },
-    { label: '$100-500', min: 100, max: 500 },
-    { label: '$500-1k', min: 500, max: 1000 },
-    { label: '$1k-5k', min: 1000, max: 5000 },
-    { label: '$5k-10k', min: 5000, max: 10000 },
-    { label: '$10k+', min: 10000, max: Infinity },
-  ];
-
-  const fixedDistribution = ranges.map((r) => ({
-    label: r.label,
-    count: (fixedJobs ?? []).filter((j) => {
-      const b = Number(j.fixed_budget);
-      return b >= r.min && b < r.max;
-    }).length,
-  }));
-
-  const { data: hourlyJobs } = await db
-    .from('jobs')
-    .select('hourly_min, hourly_max')
-    .eq('job_type', 'hourly')
-    .not('hourly_max', 'is', null);
-
-  const hourlyRanges = [
-    { label: '$0-25', min: 0, max: 25 },
-    { label: '$25-50', min: 25, max: 50 },
-    { label: '$50-75', min: 50, max: 75 },
-    { label: '$75-100', min: 75, max: 100 },
-    { label: '$100+', min: 100, max: Infinity },
-  ];
-
-  const hourlyDistribution = hourlyRanges.map((r) => ({
-    label: r.label,
-    count: (hourlyJobs ?? []).filter((j) => {
-      const max = Number(j.hourly_max);
-      return max >= r.min && max < r.max;
-    }).length,
-  }));
-
-  return c.json({ fixed: fixedDistribution, hourly: hourlyDistribution });
+  const { data } = await db.rpc('analytics_budgets');
+  return c.json(data ?? { fixed: [], hourly: [] });
 });
 
 app.get('/analytics/matches', async (c) => {
@@ -127,16 +54,16 @@ app.get('/analytics/matches', async (c) => {
 
   const { data: jobs } = await db
     .from('jobs')
-    .select('*, job_skills(skill_uid, skills(label))')
+    .select('id, title, tier, job_type, fixed_budget, hourly_min, hourly_max, client_quality_score, client_country, client_total_spent, client_payment_verified, client_total_feedback, proposals_tier, duration, engagement, job_skills(skill_uid, skills(label))')
     .order('created_on', { ascending: false })
     .limit(200);
 
   if (!jobs) return c.json({ matches: [] });
 
   const scored = jobs.map((job) => {
-    const jobSkills = (job.job_skills as JobWithSkills['job_skills']) ?? [];
+    const jobSkills = (job.job_skills as unknown as JobWithSkills['job_skills']) ?? [];
     const jobSkillLabels = jobSkills.map((js) => js.skills?.label).filter(Boolean) as string[];
-    const score = computeMatchScore(job as Job, jobSkillLabels, profile as UserProfile);
+    const score = computeMatchScore(job as unknown as Job, jobSkillLabels, profile as UserProfile);
     return { ...job, match_score: score };
   });
 
@@ -152,71 +79,10 @@ app.get('/analytics/trends', async (c) => {
   const daysBack = parseInt(days);
   const startDate = new Date();
   startDate.setDate(startDate.getDate() - daysBack);
-  const startDateStr = startDate.toISOString();
 
-  const { data: jobs } = await db
-    .from('jobs')
-    .select('created_on, job_type, tier, fixed_budget')
-    .gte('created_on', startDateStr)
-    .order('created_on', { ascending: true });
+  const { data } = await db.rpc('analytics_trends', { start_date: startDate.toISOString() });
 
-  if (!jobs) return c.json({ trends: [] });
-
-  const dailyData: Record<
-    string,
-    {
-      date: string;
-      total_jobs: number;
-      fixed_count: number;
-      hourly_count: number;
-      fixed_budgets: number[];
-      tier_breakdown: Record<string, number>;
-    }
-  > = {};
-
-  for (const job of jobs) {
-    const date = (job.created_on as string)?.split('T')[0];
-    if (!date) continue;
-
-    if (!dailyData[date]) {
-      dailyData[date] = {
-        date,
-        total_jobs: 0,
-        fixed_count: 0,
-        hourly_count: 0,
-        fixed_budgets: [],
-        tier_breakdown: {},
-      };
-    }
-
-    dailyData[date].total_jobs += 1;
-
-    if (job.job_type === 'fixed') {
-      dailyData[date].fixed_count += 1;
-      if (job.fixed_budget) {
-        dailyData[date].fixed_budgets.push(Number(job.fixed_budget));
-      }
-    } else if (job.job_type === 'hourly') {
-      dailyData[date].hourly_count += 1;
-    }
-
-    const tier = (job.tier as string) || 'unknown';
-    dailyData[date].tier_breakdown[tier] = (dailyData[date].tier_breakdown[tier] || 0) + 1;
-  }
-
-  const trends = Object.values(dailyData).map((day) => ({
-    date: day.date,
-    total_jobs: day.total_jobs,
-    fixed_count: day.fixed_count,
-    hourly_count: day.hourly_count,
-    avg_fixed_budget:
-      day.fixed_budgets.length > 0
-        ? Math.round((day.fixed_budgets.reduce((sum, b) => sum + b, 0) / day.fixed_budgets.length) * 100) / 100
-        : null,
-    tier_breakdown: day.tier_breakdown,
-  }));
-
-  return c.json({ trends });
+  return c.json({ trends: data ?? [] });
 });
 
 interface ProposalJob {
@@ -258,12 +124,14 @@ app.get('/analytics/proposals', async (c) => {
     .order('created_on', { ascending: false })
     .limit(500);
 
+  if (!jobs || jobs.length === 0) return c.json({ stats: {}, jobs_with_velocity: [] });
+
+  const jobIds = (jobs as ProposalJob[]).map((j) => j.id);
   const { data: snapshots } = await db
     .from('job_snapshots')
     .select('job_id, snapshot_at, proposals_tier')
+    .in('job_id', jobIds)
     .order('snapshot_at', { ascending: true });
-
-  if (!jobs) return c.json({ stats: {}, jobs_with_velocity: [] });
 
   // Group snapshots by job_id
   const snapshotsByJob: Record<number, ProposalSnapshot[]> = {};
