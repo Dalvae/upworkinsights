@@ -1,5 +1,4 @@
 import { Hono } from 'hono';
-import { serveStatic } from 'hono/bun';
 import { dashboardPage } from '../views/dashboard';
 import { jobsPage } from '../views/jobs';
 import { jobDetailPage } from '../views/job-detail';
@@ -7,8 +6,6 @@ import { analyticsPage } from '../views/analytics';
 import { profilePage } from '../views/profile';
 
 const app = new Hono();
-
-app.use('/static/*', serveStatic({ root: './dist/client' }));
 
 app.get('/', (c) => c.html(dashboardPage()));
 app.get('/jobs', (c) => c.html(jobsPage()));
