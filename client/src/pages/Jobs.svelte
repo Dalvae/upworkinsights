@@ -18,6 +18,7 @@
   import UiSelect from '../components/ui/UiSelect.svelte';
   import UiCombobox from '../components/ui/UiCombobox.svelte';
   import UiTooltip from '../components/ui/UiTooltip.svelte';
+  import { untrack } from 'svelte';
   import { ScrollArea } from 'bits-ui';
 
   // --- Filter state ---
@@ -170,8 +171,10 @@
   // React to filter changes
   $effect(() => {
     filterTier; filterType; filterCountry;
-    pagination = { ...pagination, pageIndex: 0 };
-    loadJobs();
+    untrack(() => {
+      pagination = { ...pagination, pageIndex: 0 };
+      loadJobs();
+    });
   });
 
   // Page size options
@@ -183,10 +186,12 @@
   let pageSizeStr = $state('20');
   $effect(() => {
     const newSize = parseInt(pageSizeStr);
-    if (newSize !== pagination.pageSize) {
-      pagination = { pageIndex: 0, pageSize: newSize };
-      loadJobs();
-    }
+    untrack(() => {
+      if (newSize !== pagination.pageSize) {
+        pagination = { pageIndex: 0, pageSize: newSize };
+        loadJobs();
+      }
+    });
   });
 
   loadCountries();

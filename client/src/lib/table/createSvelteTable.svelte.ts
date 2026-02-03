@@ -4,6 +4,7 @@ import {
   type TableOptions,
   type TableOptionsResolved,
 } from "@tanstack/table-core";
+import { untrack } from "svelte";
 
 export function createSvelteTable<TData extends RowData>(
   options: TableOptions<TData>
@@ -14,7 +15,7 @@ export function createSvelteTable<TData extends RowData>(
     return {
       ...opts,
       state: {
-        ...state,
+        ...untrack(() => state),
         ...opts.state,
       },
       onStateChange: (updater: any) => {
