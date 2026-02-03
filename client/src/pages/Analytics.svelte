@@ -6,8 +6,9 @@
   import BarChart from '../components/BarChart.svelte';
   import DoughnutChart from '../components/DoughnutChart.svelte';
   import Loading from '../components/Loading.svelte';
+  import UiSelect from '../components/ui/UiSelect.svelte';
 
-  let trendsDays = $state(30);
+  let trendsDays = $state("30");
 
   // Budget trends
   let budgetLabels = $state<string[]>([]);
@@ -66,15 +67,12 @@
     }));
   }
 
-  function handleDaysChange(e: Event) {
-    trendsDays = parseInt((e.target as HTMLSelectElement).value);
-    loadTrends(trendsDays);
-  }
+  $effect(() => {
+    loadTrends(parseInt(trendsDays));
+  });
 
   async function init() {
     try {
-      loadTrends(30);
-
       const skillsData = await api.getSkills(15);
       skillLabels = skillsData.skills.map((s: any) => s.label);
       skillData = skillsData.skills.map((s: any) => s.job_count);
@@ -128,11 +126,15 @@
   <div class="bg-gray-900 rounded-lg p-5 border border-gray-800 mb-8">
     <div class="flex items-center justify-between mb-4">
       <h3 class="text-lg font-semibold">Budget Trends</h3>
-      <select onchange={handleDaysChange} class="bg-gray-800 border border-gray-700 rounded-lg px-3 py-1 text-sm text-gray-100">
-        <option value="7">7 days</option>
-        <option value="30" selected>30 days</option>
-        <option value="90">90 days</option>
-      </select>
+      <UiSelect
+        options={[
+          { value: "7", label: "7 days" },
+          { value: "30", label: "30 days" },
+          { value: "90", label: "90 days" },
+        ]}
+        bind:value={trendsDays}
+        placeholder="30 days"
+      />
     </div>
     <div style="height: 300px;">
       <LineChart labels={budgetLabels} datasets={budgetDatasets} />
