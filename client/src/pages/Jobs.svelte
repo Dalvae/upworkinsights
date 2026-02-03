@@ -5,6 +5,7 @@
   import TierBadge from '../components/TierBadge.svelte';
   import SkillTag from '../components/SkillTag.svelte';
   import Pagination from '../components/Pagination.svelte';
+  import UiSelect from '../components/ui/UiSelect.svelte';
 
   let currentPage = $state(1);
   let currentSort = $state('created_on');
@@ -68,10 +69,7 @@
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
-  function handleFilterChange() {
-    currentPage = 1;
-    loadJobs();
-  }
+  // handleFilterChange removed — $effect reacts to filter/limit changes
 
   function sortIcon(col: string): string {
     if (currentSort !== col) return '';
@@ -96,6 +94,18 @@
     return { text: `${score}/10`, color: scoreColor(parseFloat(score)) };
   }
 
+  let countryOptions = $derived([
+    { value: "", label: "All Countries" },
+    ...countries.map(c => ({ value: c.country, label: `${c.country} (${c.count})` })),
+  ]);
+
+  $effect(() => {
+    // track these values to trigger reload
+    filterTier; filterType; filterCountry; currentLimit;
+    currentPage = 1;
+    loadJobs();
+  });
+
   const columns = [
     { key: 'title', label: 'Title' },
     { key: 'fixed_budget', label: 'Budget', width: 'w-28' },
@@ -109,7 +119,6 @@
   ];
 
   loadCountries();
-  loadJobs();
 </script>
 
 <div>
@@ -117,32 +126,39 @@
     <input type="text" placeholder="Search jobs..."
       oninput={(e) => debounceSearch((e.target as HTMLInputElement).value)}
       class="bg-gray-800 border border-gray-700 rounded-lg px-4 py-2 text-sm text-gray-100 placeholder-gray-500 focus:outline-none focus:border-blue-500 w-64">
-    <select bind:value={filterTier} onchange={handleFilterChange}
-      class="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100">
-      <option value="">All Tiers</option>
-      <option value="expert">Expert</option>
-      <option value="intermediate">Intermediate</option>
-      <option value="entry">Entry Level</option>
-    </select>
-    <select bind:value={filterType} onchange={handleFilterChange}
-      class="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100">
-      <option value="">All Types</option>
-      <option value="fixed">Fixed Price</option>
-      <option value="hourly">Hourly</option>
-    </select>
-    <select bind:value={filterCountry} onchange={handleFilterChange}
-      class="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100">
-      <option value="">All Countries</option>
-      {#each countries as c}
-        <option value={c.country}>{c.country} ({c.count})</option>
-      {/each}
-    </select>
-    <select bind:value={currentLimit} onchange={handleFilterChange}
-      class="bg-gray-800 border border-gray-700 rounded-lg px-3 py-2 text-sm text-gray-100">
-      <option value="20">20 per page</option>
-      <option value="50">50 per page</option>
-      <option value="100">100 per page</option>
-    </select>
+    <UiSelect
+      options={[
+        { value: "", label: "All Tiers" },
+        { value: "expert", label: "Expert" },
+        { value: "intermediate", label: "Intermediate" },
+        { value: "entry", label: "Entry Level" },
+      ]}
+      bind:value={filterTier}
+      placeholder="All Tiers"
+    />
+    <UiSelect
+      options={[
+        { value: "", label: "All Types" },
+        { value: "fixed", label: "Fixed Price" },
+        { value: "hourly", label: "Hourly" },
+      ]}
+      bind:value={filterType}
+      placeholder="All Types"
+    />
+    <UiSelect
+      options={countryOptions}
+      bind:value={filterCountry}
+      placeholder="All Countries"
+    />
+    <UiSelect
+      options={[
+        { value: "20", label: "20 per page" },
+        { value: "50", label: "50 per page" },
+        { value: "100", label: "100 per page" },
+      ]}
+      bind:value={currentLimit}
+      placeholder="20 per page"
+    />
     <span class="text-sm text-gray-500 ml-auto">{pagination.total} jobs found</span>
   </div>
 
