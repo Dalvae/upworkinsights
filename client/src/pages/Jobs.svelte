@@ -283,7 +283,7 @@
                         {#if cell.column.id === 'title'}
                           <div class="flex items-center gap-2">
                             <UiTooltip text={job.title}>
-                              <a href="/jobs/{job.id}" use:link class="font-medium text-gray-100 hover:text-blue-400 truncate max-w-md min-w-0 transition-colors">{job.title}</a>
+                              <a href="/jobs/{job.ciphertext}" use:link class="font-medium text-gray-100 hover:text-blue-400 truncate max-w-md min-w-0 transition-colors">{job.title}</a>
                             </UiTooltip>
                             {#if job.ciphertext}
                               <a href="https://www.upwork.com/jobs/{job.ciphertext}" target="_blank" rel="noopener" class="text-gray-600 hover:text-blue-400 shrink-0" title="View on Upwork">&#8599;</a>

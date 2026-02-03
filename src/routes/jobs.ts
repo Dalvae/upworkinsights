@@ -75,14 +75,14 @@ app.get('/jobs/countries', async (c) => {
   return c.json({ countries });
 });
 
-app.get('/jobs/:id', async (c) => {
+app.get('/jobs/:ciphertext', async (c) => {
   const db = c.get('db');
-  const id = c.req.param('id');
+  const ciphertext = c.req.param('ciphertext');
 
   const { data: job, error } = await db
     .from('jobs')
     .select('*, job_skills(skill_uid, is_highlighted, skills(uid, label))')
-    .eq('id', id)
+    .eq('ciphertext', ciphertext)
     .single();
 
   if (error || !job) return c.json({ error: 'Job not found' }, 404);
@@ -99,14 +99,23 @@ app.get('/jobs/:id', async (c) => {
   return c.json({ ...job, match_score: matchScore });
 });
 
-app.get('/jobs/:id/history', async (c) => {
+app.get('/jobs/:ciphertext/history', async (c) => {
   const db = c.get('db');
-  const id = c.req.param('id');
+  const ciphertext = c.req.param('ciphertext');
+
+  // Look up the numeric job_id from ciphertext for the snapshots join
+  const { data: jobRow } = await db
+    .from('jobs')
+    .select('id')
+    .eq('ciphertext', ciphertext)
+    .single();
+
+  if (!jobRow) return c.json({ snapshots: [] });
 
   const { data: snapshots, error } = await db
     .from('job_snapshots')
     .select('*')
-    .eq('job_id', id)
+    .eq('job_id', jobRow.id)
     .order('snapshot_at', { ascending: true });
 
   if (error) return c.json({ error: error.message }, 500);

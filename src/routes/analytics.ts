@@ -87,6 +87,7 @@ app.get('/analytics/trends', async (c) => {
 
 interface ProposalJob {
   id: number;
+  ciphertext: string;
   title: string;
   tier: string;
   job_type: string;
@@ -105,6 +106,7 @@ interface ProposalSnapshot {
 
 interface JobVelocity {
   id: number;
+  ciphertext: string;
   title: string;
   tier: string;
   job_type: string;
@@ -120,7 +122,7 @@ app.get('/analytics/proposals', async (c) => {
 
   const { data: jobs } = await db
     .from('jobs')
-    .select('id, title, tier, job_type, fixed_budget, hourly_max, created_on, proposals_tier, first_seen_at')
+    .select('id, ciphertext, title, tier, job_type, fixed_budget, hourly_max, created_on, proposals_tier, first_seen_at')
     .order('created_on', { ascending: false })
     .limit(500);
 
@@ -152,6 +154,7 @@ app.get('/analytics/proposals', async (c) => {
 
     return {
       id: job.id,
+      ciphertext: job.ciphertext,
       title: job.title,
       tier: job.tier,
       job_type: job.job_type,

@@ -229,7 +229,7 @@
                 <div class="space-y-1">
                   {#if hottestJobs.length > 0}
                     {#each hottestJobs as j}
-                      <a href="/jobs/{j.id}" use:link class="flex justify-between items-center py-1.5 text-sm hover:bg-gray-800/50 rounded px-2 -mx-2">
+                      <a href="/jobs/{j.ciphertext}" use:link class="flex justify-between items-center py-1.5 text-sm hover:bg-gray-800/50 rounded px-2 -mx-2">
                         <span class="text-gray-300 truncate flex-1 mr-2">{j.title}</span>
                         <span class="text-red-400 font-medium whitespace-nowrap">{j.velocity}/hr</span>
                       </a>
