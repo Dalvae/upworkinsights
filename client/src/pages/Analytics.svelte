@@ -7,6 +7,7 @@
   import DoughnutChart from '../components/DoughnutChart.svelte';
   import Loading from '../components/Loading.svelte';
   import UiSelect from '../components/ui/UiSelect.svelte';
+  import { ScrollArea } from "bits-ui";
 
   let trendsDays = $state("30");
 
@@ -192,18 +193,25 @@
       </div>
       <div>
         <h4 class="text-sm text-gray-400 mb-3">Hottest Jobs (Fastest Proposals)</h4>
-        <div class="space-y-1 max-h-52 overflow-y-auto">
-          {#if hottestJobs.length > 0}
-            {#each hottestJobs as j}
-              <a href="/jobs/{j.id}" use:link class="flex justify-between items-center py-1.5 text-sm hover:bg-gray-800/50 rounded px-2 -mx-2">
-                <span class="text-gray-300 truncate flex-1 mr-2">{j.title}</span>
-                <span class="text-red-400 font-medium whitespace-nowrap">{j.velocity}/hr</span>
-              </a>
-            {/each}
-          {:else}
-            <p class="text-gray-500 text-sm">No proposal data yet</p>
-          {/if}
-        </div>
+        <ScrollArea.Root type="hover" class="max-h-52">
+          <ScrollArea.Viewport class="max-h-52">
+            <div class="space-y-1">
+              {#if hottestJobs.length > 0}
+                {#each hottestJobs as j}
+                  <a href="/jobs/{j.id}" use:link class="flex justify-between items-center py-1.5 text-sm hover:bg-gray-800/50 rounded px-2 -mx-2">
+                    <span class="text-gray-300 truncate flex-1 mr-2">{j.title}</span>
+                    <span class="text-red-400 font-medium whitespace-nowrap">{j.velocity}/hr</span>
+                  </a>
+                {/each}
+              {:else}
+                <p class="text-gray-500 text-sm">No proposal data yet</p>
+              {/if}
+            </div>
+          </ScrollArea.Viewport>
+          <ScrollArea.Scrollbar orientation="vertical" class="w-2 bg-gray-800 rounded">
+            <ScrollArea.Thumb class="bg-gray-600 rounded" />
+          </ScrollArea.Scrollbar>
+        </ScrollArea.Root>
       </div>
     </div>
   </div>

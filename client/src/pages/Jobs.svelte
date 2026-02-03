@@ -7,6 +7,7 @@
   import Pagination from '../components/Pagination.svelte';
   import UiSelect from '../components/ui/UiSelect.svelte';
   import UiCombobox from '../components/ui/UiCombobox.svelte';
+  import { ScrollArea } from "bits-ui";
 
   let currentPage = $state(1);
   let currentSort = $state('created_on');
@@ -164,7 +165,8 @@
   </div>
 
   <div class="bg-gray-900 rounded-lg border border-gray-800 overflow-hidden">
-    <div class="overflow-x-auto">
+    <ScrollArea.Root type="hover">
+      <ScrollArea.Viewport class="overflow-x-auto">
       <table class="w-full text-sm text-left">
         <thead class="text-xs text-gray-400 uppercase bg-gray-800/50">
           <tr>
@@ -219,7 +221,11 @@
           {/if}
         </tbody>
       </table>
-    </div>
+      </ScrollArea.Viewport>
+      <ScrollArea.Scrollbar orientation="horizontal" class="h-2 bg-gray-800 rounded">
+        <ScrollArea.Thumb class="bg-gray-600 rounded" />
+      </ScrollArea.Scrollbar>
+    </ScrollArea.Root>
   </div>
 
   <Pagination page={pagination.page} total={pagination.total} perPage={parseInt(currentLimit)} onPageChange={handlePageChange} />
