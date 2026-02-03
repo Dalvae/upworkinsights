@@ -55,11 +55,33 @@ export function matchBarColor(score: number): string {
   return 'bg-gray-500';
 }
 
-export function formatDate(dateStr: string): string {
+export function formatDate(dateStr: string | null): string {
+  if (!dateStr) return '-';
   return new Date(dateStr).toLocaleDateString();
 }
 
-export function formatDateShort(dateStr: string): string {
+export function formatDateShort(dateStr: string | null): string {
+  if (!dateStr) return '-';
   const d = new Date(dateStr);
   return `${d.getMonth() + 1}/${d.getDate()}`;
+}
+
+export function formatScore(value: string | number | null, max: number = 10): string {
+  if (!value) return `-/${max}`;
+  return `${parseFloat(String(value)).toFixed(1)}/${max}`;
+}
+
+export function formatMoney(value: string | number | null): string {
+  if (!value) return '$0';
+  return `$${(parseFloat(String(value)) || 0).toLocaleString()}`;
+}
+
+export function formatDateTime(dateStr: string | null): string {
+  if (!dateStr) return '-';
+  return new Date(dateStr).toLocaleString();
+}
+
+export function formatDateTimeShort(dateStr: string): string {
+  const d = new Date(dateStr);
+  return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
