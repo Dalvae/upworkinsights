@@ -6,60 +6,6 @@ function stripHtml(text: string): string {
   return text.replace(/<[^>]*>/g, '').replace(/&amp;/g, '&').replace(/&lt;/g, '<').replace(/&gt;/g, '>').replace(/&quot;/g, '"').replace(/&#39;/g, "'");
 }
 
-/** Maps ISO 3166-1 alpha-2/alpha-3 codes and common aliases to canonical country names. */
-const COUNTRY_ALIASES: Record<string, string> = {
-  'US': 'United States', 'USA': 'United States',
-  'GB': 'United Kingdom', 'GBR': 'United Kingdom', 'UK': 'United Kingdom',
-  'DE': 'Germany', 'DEU': 'Germany',
-  'NL': 'Netherlands', 'NLD': 'Netherlands',
-  'HU': 'Hungary', 'HUN': 'Hungary',
-  'PK': 'Pakistan', 'PAK': 'Pakistan',
-  'SG': 'Singapore', 'SGP': 'Singapore',
-  'IN': 'India', 'IND': 'India',
-  'AU': 'Australia', 'AUS': 'Australia',
-  'CA': 'Canada', 'CAN': 'Canada',
-  'FR': 'France', 'FRA': 'France',
-  'IL': 'Israel', 'ISR': 'Israel',
-  'IT': 'Italy', 'ITA': 'Italy',
-  'ES': 'Spain', 'ESP': 'Spain',
-  'BR': 'Brazil', 'BRA': 'Brazil',
-  'MX': 'Mexico', 'MEX': 'Mexico',
-  'JP': 'Japan', 'JPN': 'Japan',
-  'CN': 'China', 'CHN': 'China',
-  'KR': 'South Korea', 'KOR': 'South Korea',
-  'PH': 'Philippines', 'PHL': 'Philippines',
-  'EG': 'Egypt', 'EGY': 'Egypt',
-  'PL': 'Poland', 'POL': 'Poland',
-  'CY': 'Cyprus', 'CYP': 'Cyprus',
-  'CZ': 'Czech Republic', 'CZE': 'Czech Republic',
-  'AT': 'Austria', 'AUT': 'Austria',
-  'CH': 'Switzerland', 'CHE': 'Switzerland',
-  'ZA': 'South Africa', 'ZAF': 'South Africa',
-  'KW': 'Kuwait', 'KWT': 'Kuwait',
-  'TH': 'Thailand', 'THA': 'Thailand',
-  'UA': 'Ukraine', 'UKR': 'Ukraine',
-  'RO': 'Romania', 'ROU': 'Romania',
-  'BD': 'Bangladesh', 'BGD': 'Bangladesh',
-  'NG': 'Nigeria', 'NGA': 'Nigeria',
-  'AR': 'Argentina', 'ARG': 'Argentina',
-  'CO': 'Colombia', 'COL': 'Colombia',
-  'SE': 'Sweden', 'SWE': 'Sweden',
-  'NO': 'Norway', 'NOR': 'Norway',
-  'DK': 'Denmark', 'DNK': 'Denmark',
-  'FI': 'Finland', 'FIN': 'Finland',
-  'PT': 'Portugal', 'PRT': 'Portugal',
-  'IE': 'Ireland', 'IRL': 'Ireland',
-  'NZ': 'New Zealand', 'NZL': 'New Zealand',
-  'AE': 'United Arab Emirates', 'ARE': 'United Arab Emirates', 'UAE': 'United Arab Emirates',
-  'SA': 'Saudi Arabia', 'SAU': 'Saudi Arabia',
-};
-
-function normalizeCountry(country: string | undefined | null): string | null {
-  if (!country) return null;
-  const trimmed = country.trim();
-  return COUNTRY_ALIASES[trimmed.toUpperCase()] || COUNTRY_ALIASES[trimmed] || trimmed;
-}
-
 export function normalizeJob(raw: RawUpworkJob, sourceUrl?: string | null, searchQuery?: string | null): Job {
   const jobType = parseJobType(raw.type);
 
@@ -80,7 +26,7 @@ export function normalizeJob(raw: RawUpworkJob, sourceUrl?: string | null, searc
     is_premium: raw.premium || false,
     freelancers_to_hire: raw.freelancersToHire || 1,
     is_applied: raw.isApplied || false,
-    client_country: normalizeCountry(raw.client?.location?.country),
+    client_country: raw.client?.location?.country || null,
     client_payment_verified: raw.client?.isPaymentVerified || false,
     client_total_spent: raw.client?.totalSpent ? (Number(raw.client.totalSpent.replace(/[^0-9.]/g, '')) || null) : null,
     client_total_reviews: raw.client?.totalReviews ?? 0,
