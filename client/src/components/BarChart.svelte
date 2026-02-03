@@ -1,6 +1,9 @@
 <script lang="ts">
-  import type { Chart } from 'chart.js/auto';
-  import { createBarChart } from '../lib/charts';
+  import Chart from '$layerchart/components/Chart.svelte';
+  import Svg from '$layerchart/components/layout/Svg.svelte';
+  import Axis from '$layerchart/components/Axis.svelte';
+  import Bar from '$layerchart/components/Bar.svelte';
+  import { scaleBand, scaleLinear } from 'd3-scale';
 
   let {
     labels,
@@ -16,22 +19,52 @@
     label?: string;
   } = $props();
 
-  let canvas: HTMLCanvasElement;
-  let chart: Chart | undefined;
+  const chartData = $derived(
+    labels.map((l, i) => ({ category: l, value: data[i] ?? 0 }))
+  );
 
-  $effect(() => {
-    const l = labels;
-    const d = data;
-
-    if (chart) chart.destroy();
-    if (canvas && l.length > 0) {
-      chart = createBarChart(canvas, l, d, { color, horizontal, label });
-    }
-
-    return () => {
-      if (chart) chart.destroy();
-    };
-  });
+  const yMax = $derived(Math.max(...data, 0) * 1.1 || 10);
 </script>
 
-<canvas bind:this={canvas}></canvas>
+<div class="h-full w-full">
+  {#if horizontal}
+    <Chart
+      data={chartData}
+      x="value"
+      xScale={scaleLinear()}
+      xDomain={[0, yMax]}
+      xNice
+      y="category"
+      yScale={scaleBand().padding(0.3)}
+      padding={{ top: 10, right: 16, bottom: 32, left: 80 }}
+    >
+      <Svg>
+        <Axis placement="bottom" classes={{ text: 'fill-gray-400 text-xs' }} />
+        <Axis placement="left" classes={{ text: 'fill-gray-400 text-xs' }} />
+        {#each chartData as bar}
+          <Bar {bar} fill={color} radius={4} rounded="right" />
+        {/each}
+      </Svg>
+    </Chart>
+  {:else}
+    <Chart
+      data={chartData}
+      x="category"
+      xScale={scaleBand().padding(0.3)}
+      y="value"
+      yScale={scaleLinear()}
+      yDomain={[0, yMax]}
+      yNice
+      yBaseline={0}
+      padding={{ top: 10, right: 16, bottom: 32, left: 48 }}
+    >
+      <Svg>
+        <Axis placement="bottom" classes={{ text: 'fill-gray-400 text-xs' }} />
+        <Axis placement="left" classes={{ text: 'fill-gray-400 text-xs' }} />
+        {#each chartData as bar}
+          <Bar {bar} fill={color} radius={4} rounded="top" />
+        {/each}
+      </Svg>
+    </Chart>
+  {/if}
+</div>
