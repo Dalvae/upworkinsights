@@ -1,5 +1,6 @@
 <script lang="ts">
   import { link } from 'svelte-spa-router';
+  import { Progress } from "bits-ui";
   import { api } from '../lib/api';
   import { formatProposals, formatBudget, proposalMidpoint, tierColor, scoreColor, matchBarColor } from '../lib/format';
   import LineChart from '../components/LineChart.svelte';
@@ -185,9 +186,19 @@
     {#if job.match_score !== null && job.match_score !== undefined}
       <div class="flex items-center gap-4">
         <span class="text-4xl font-bold {matchColor}">{job.match_score}%</span>
-        <div class="flex-1 bg-gray-800 rounded-full h-3 overflow-hidden">
-          <div class="h-full rounded-full {matchBar}" style="width: {job.match_score}%"></div>
-        </div>
+        <Progress.Root
+          value={job.match_score}
+          max={100}
+          aria-label="Match score"
+          class="flex-1 bg-gray-800 rounded-full h-3 overflow-hidden"
+        >
+          {#snippet children({ value, max })}
+            <div
+              class="h-full rounded-full transition-all {matchBar}"
+              style="width: {(value / max) * 100}%"
+            ></div>
+          {/snippet}
+        </Progress.Root>
       </div>
     {:else}
       <p class="text-gray-500 text-sm">Set up your profile to see match score</p>
