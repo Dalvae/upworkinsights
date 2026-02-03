@@ -1,6 +1,8 @@
 import { Hono } from 'hono';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { computeMatchScore } from '../lib/matching';
+import { proposalMidpoint } from '../lib/constants';
+import type { Job, JobWithSkills, JobSnapshot, Skill, UserProfile } from '../types';
 
 type Env = { Variables: { db: SupabaseClient } };
 const app = new Hono<Env>();
@@ -15,22 +17,22 @@ app.get('/analytics/overview', async (c) => {
 
   const avgFixedBudget =
     fixedJobs && fixedJobs.length > 0
-      ? fixedJobs.reduce((sum: number, j: any) => sum + (parseFloat(j.fixed_budget) || 0), 0) / fixedJobs.length
+      ? fixedJobs.reduce((sum, j) => sum + (Number(j.fixed_budget) || 0), 0) / fixedJobs.length
       : 0;
 
   const { data: tierData } = await db.from('jobs').select('tier');
   const tierBreakdown: Record<string, number> = {};
-  (tierData || []).forEach((j: any) => {
-    const t = j.tier || 'unknown';
+  for (const j of tierData ?? []) {
+    const t = (j.tier as string) || 'unknown';
     tierBreakdown[t] = (tierBreakdown[t] || 0) + 1;
-  });
+  }
 
   const { data: countryData } = await db.from('jobs').select('client_country');
   const countries: Record<string, number> = {};
-  (countryData || []).forEach((j: any) => {
-    const country = j.client_country || 'Unknown';
+  for (const j of countryData ?? []) {
+    const country = (j.client_country as string) || 'Unknown';
     countries[country] = (countries[country] || 0) + 1;
-  });
+  }
   const topCountries = Object.entries(countries)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 10)
@@ -85,8 +87,8 @@ app.get('/analytics/budgets', async (c) => {
 
   const fixedDistribution = ranges.map((r) => ({
     label: r.label,
-    count: (fixedJobs || []).filter((j: any) => {
-      const b = parseFloat(j.fixed_budget);
+    count: (fixedJobs ?? []).filter((j) => {
+      const b = Number(j.fixed_budget);
       return b >= r.min && b < r.max;
     }).length,
   }));
@@ -107,8 +109,8 @@ app.get('/analytics/budgets', async (c) => {
 
   const hourlyDistribution = hourlyRanges.map((r) => ({
     label: r.label,
-    count: (hourlyJobs || []).filter((j: any) => {
-      const max = parseFloat(j.hourly_max);
+    count: (hourlyJobs ?? []).filter((j) => {
+      const max = Number(j.hourly_max);
       return max >= r.min && max < r.max;
     }).length,
   }));
@@ -131,13 +133,14 @@ app.get('/analytics/matches', async (c) => {
 
   if (!jobs) return c.json({ matches: [] });
 
-  const scored = jobs.map((job: any) => {
-    const jobSkillLabels = (job.job_skills || []).map((js: any) => js.skills?.label).filter(Boolean);
-    const score = computeMatchScore(job, jobSkillLabels, profile);
+  const scored = jobs.map((job) => {
+    const jobSkills = (job.job_skills as JobWithSkills['job_skills']) ?? [];
+    const jobSkillLabels = jobSkills.map((js) => js.skills?.label).filter(Boolean) as string[];
+    const score = computeMatchScore(job as Job, jobSkillLabels, profile as UserProfile);
     return { ...job, match_score: score };
   });
 
-  scored.sort((a: any, b: any) => b.match_score - a.match_score);
+  scored.sort((a, b) => b.match_score - a.match_score);
 
   return c.json({ matches: scored.slice(0, parseInt(limit)) });
 });
@@ -171,9 +174,9 @@ app.get('/analytics/trends', async (c) => {
     }
   > = {};
 
-  jobs.forEach((job: any) => {
-    const date = job.created_on?.split('T')[0];
-    if (!date) return;
+  for (const job of jobs) {
+    const date = (job.created_on as string)?.split('T')[0];
+    if (!date) continue;
 
     if (!dailyData[date]) {
       dailyData[date] = {
@@ -191,15 +194,15 @@ app.get('/analytics/trends', async (c) => {
     if (job.job_type === 'fixed') {
       dailyData[date].fixed_count += 1;
       if (job.fixed_budget) {
-        dailyData[date].fixed_budgets.push(parseFloat(job.fixed_budget));
+        dailyData[date].fixed_budgets.push(Number(job.fixed_budget));
       }
     } else if (job.job_type === 'hourly') {
       dailyData[date].hourly_count += 1;
     }
 
-    const tier = job.tier || 'unknown';
+    const tier = (job.tier as string) || 'unknown';
     dailyData[date].tier_breakdown[tier] = (dailyData[date].tier_breakdown[tier] || 0) + 1;
-  });
+  }
 
   const trends = Object.values(dailyData).map((day) => ({
     date: day.date,
@@ -216,10 +219,39 @@ app.get('/analytics/trends', async (c) => {
   return c.json({ trends });
 });
 
+interface ProposalJob {
+  id: number;
+  title: string;
+  tier: string;
+  job_type: string;
+  fixed_budget: number | null;
+  hourly_max: number | null;
+  created_on: string;
+  proposals_tier: string | null;
+  first_seen_at: string | null;
+}
+
+interface ProposalSnapshot {
+  job_id: number;
+  snapshot_at: string;
+  proposals_tier: string | null;
+}
+
+interface JobVelocity {
+  id: number;
+  title: string;
+  tier: string;
+  job_type: string;
+  proposals_tier: string | null;
+  proposals_estimate: number;
+  hours_since_published: number;
+  velocity: number;
+  snapshot_count: number;
+}
+
 app.get('/analytics/proposals', async (c) => {
   const db = c.get('db');
 
-  // Get all jobs with their snapshots to analyze proposal velocity
   const { data: jobs } = await db
     .from('jobs')
     .select('id, title, tier, job_type, fixed_budget, hourly_max, created_on, proposals_tier, first_seen_at')
@@ -233,39 +265,21 @@ app.get('/analytics/proposals', async (c) => {
 
   if (!jobs) return c.json({ stats: {}, jobs_with_velocity: [] });
 
-  // Map to parse proposals_tier text into numeric midpoint
-  // Upwork tiers: "Less than 5", "5 to 10", "10 to 15", "15 to 20", "20 to 50", "50+"
-  function proposalMidpoint(tier: string | null): number {
-    if (!tier) return 0;
-    if (tier.includes('Less than 5') || tier === '0') return 2;
-    if (tier.includes('5 to 10') || tier === '5-10') return 7;
-    if (tier.includes('10 to 15') || tier === '10-15') return 12;
-    if (tier.includes('15 to 20') || tier === '15-20') return 17;
-    if (tier.includes('20 to 50') || tier === '20-50') return 35;
-    if (tier.includes('50+') || tier.includes('50 +')) return 60;
-    // Try to parse as "X to Y"
-    const match = tier.match(/(\d+)\s*(?:to|-)\s*(\d+)/);
-    if (match) return (parseInt(match[1]) + parseInt(match[2])) / 2;
-    return 0;
-  }
-
   // Group snapshots by job_id
-  const snapshotsByJob: Record<string, any[]> = {};
-  (snapshots || []).forEach((s: any) => {
+  const snapshotsByJob: Record<number, ProposalSnapshot[]> = {};
+  for (const s of (snapshots ?? []) as ProposalSnapshot[]) {
     if (!snapshotsByJob[s.job_id]) snapshotsByJob[s.job_id] = [];
     snapshotsByJob[s.job_id].push(s);
-  });
+  }
 
   // Calculate velocity for each job
-  const jobsWithVelocity = jobs.map((job: any) => {
-    const jobSnapshots = snapshotsByJob[job.id] || [];
+  const jobsWithVelocity: JobVelocity[] = (jobs as ProposalJob[]).map((job) => {
+    const jobSnapshots = snapshotsByJob[job.id] ?? [];
     const currentProposals = proposalMidpoint(job.proposals_tier);
 
-    // Hours since published
     const publishedAt = new Date(job.first_seen_at || job.created_on);
     const hoursSincePublished = (Date.now() - publishedAt.getTime()) / (1000 * 60 * 60);
 
-    // Proposals per hour
     const velocity = hoursSincePublished > 0 ? currentProposals / hoursSincePublished : 0;
 
     return {
@@ -285,7 +299,7 @@ app.get('/analytics/proposals', async (c) => {
   const byTier: Record<string, { count: number; total_velocity: number }> = {};
   const byType: Record<string, { count: number; total_velocity: number }> = {};
 
-  jobsWithVelocity.forEach((j: any) => {
+  for (const j of jobsWithVelocity) {
     if (j.velocity > 0) {
       const t = j.tier || 'unknown';
       if (!byTier[t]) byTier[t] = { count: 0, total_velocity: 0 };
@@ -297,7 +311,7 @@ app.get('/analytics/proposals', async (c) => {
       byType[jt].count++;
       byType[jt].total_velocity += j.velocity;
     }
-  });
+  }
 
   const avgByTier = Object.fromEntries(
     Object.entries(byTier).map(([k, v]) => [k, Math.round((v.total_velocity / v.count) * 100) / 100])
@@ -308,10 +322,10 @@ app.get('/analytics/proposals', async (c) => {
 
   // Distribution: how many jobs in each proposals_tier
   const proposalDistribution: Record<string, number> = {};
-  jobs.forEach((j: any) => {
+  for (const j of jobs as ProposalJob[]) {
     const tier = j.proposals_tier || 'Unknown';
     proposalDistribution[tier] = (proposalDistribution[tier] || 0) + 1;
-  });
+  }
 
   return c.json({
     stats: {
@@ -319,10 +333,9 @@ app.get('/analytics/proposals', async (c) => {
       avg_velocity_by_type: avgByType,
       proposal_distribution: proposalDistribution,
     },
-    // Return top 20 fastest-moving jobs
     hottest_jobs: jobsWithVelocity
-      .filter((j: any) => j.velocity > 0)
-      .sort((a: any, b: any) => b.velocity - a.velocity)
+      .filter((j) => j.velocity > 0)
+      .sort((a, b) => b.velocity - a.velocity)
       .slice(0, 20),
   });
 });

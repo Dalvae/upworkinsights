@@ -18,7 +18,7 @@ export interface RawUpworkJob {
     totalFeedback: number;
     hasFinancialPrivacy: boolean;
   };
-  clientRelation?: any;
+  clientRelation?: Record<string, unknown> | null;
   freelancersToHire: number;
   relevanceEncoded?: string;
   enterpriseJob?: boolean;
@@ -37,6 +37,17 @@ export interface RawUpworkJob {
   hourlyBudget: { min: number; max: number } | null;
   weeklyBudget?: { amount: number } | null;
   isSTSVectorSearchResult?: boolean | null;
+  // From jobAuthDetails (job detail page)
+  status?: string | null;
+  clientActivity?: {
+    totalHired?: number;
+    totalApplicants?: number;
+    totalInvitedToInterview?: number;
+    invitationsSent?: number;
+    unansweredInvites?: number;
+    lastBuyerActivity?: string;
+    numberOfPositionsToHire?: number;
+  } | null;
 }
 
 export type JobType = 'fixed' | 'hourly';
@@ -71,6 +82,19 @@ export interface Job {
   client_quality_score: number | null;
   source_url: string | null;
   search_query: string | null;
+  job_status: string | null;
+  total_hired: number;
+  total_applicants: number | null;
+  total_invited_to_interview: number;
+  invitations_sent: number;
+  unanswered_invites: number;
+  last_buyer_activity: string | null;
+}
+
+export type JobRow = Job & { id: number; first_seen_at: string; last_seen_at: string };
+
+export interface JobWithSkills extends JobRow {
+  job_skills: { skill_uid: string; is_highlighted: boolean; skills: { uid?: string; label: string } | null }[];
 }
 
 export interface Skill {
@@ -89,7 +113,7 @@ export interface UserProfile {
   id: string;
   skills: string[];
   hourly_rate: number | null;
-  preferred_tiers: string[];
+  preferred_tiers: Tier[];
   min_budget: number | null;
   api_key: string | null;
 }
@@ -110,6 +134,8 @@ export interface JobSnapshot {
   proposals_tier: string | null;
   freelancers_to_hire: number;
   is_applied: boolean;
+  total_hired: number | null;
+  total_applicants: number | null;
 }
 
 export interface IngestPayload {

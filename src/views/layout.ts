@@ -9,13 +9,17 @@ export function layout(title: string, activePage: string, content: any) {
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>${title} - Upwork Insights</title>
+  <title>${title} - Insights</title>
   <link rel="stylesheet" href="/static/styles.css">
+  <script src="https://code.iconify.design/iconify-icon/2.3.0/iconify-icon.min.js"></script>
 </head>
 <body class="bg-gray-950 text-gray-100 min-h-screen">
-  <nav class="bg-gray-900 border-b border-gray-800 px-6 py-3">
-    <div class="max-w-7xl mx-auto flex items-center justify-between">
-      <a href="/" class="text-xl font-bold text-white">Upwork Insights</a>
+  <nav class="bg-gray-900 border-b border-gray-800">
+    <div class="container py-3 flex items-center justify-between">
+      <a href="/" class="flex items-center gap-2 text-xl font-bold text-white">
+        <iconify-icon icon="simple-icons:upwork" width="24" style="color: #6fda44"></iconify-icon>
+        Insights
+      </a>
       <div class="flex gap-6">
         ${navLink('/', 'Dashboard', 'dashboard')}
         ${navLink('/jobs', 'Jobs', 'jobs')}
@@ -24,7 +28,7 @@ export function layout(title: string, activePage: string, content: any) {
       </div>
     </div>
   </nav>
-  <main class="max-w-7xl mx-auto px-6 py-8">
+  <main class="container py-8">
     ${content}
   </main>
 </body>

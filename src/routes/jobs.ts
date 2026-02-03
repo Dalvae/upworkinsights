@@ -1,6 +1,7 @@
 import { Hono } from 'hono';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { computeMatchScore } from '../lib/matching';
+import type { Job, JobWithSkills, UserProfile } from '../types';
 
 type Env = { Variables: { db: SupabaseClient } };
 const app = new Hono<Env>();
@@ -26,7 +27,7 @@ app.get('/jobs', async (c) => {
   const offset = (pageNum - 1) * limitNum;
 
   const safeSort = ALLOWED_SORT_COLUMNS.includes(sort) ? sort : 'created_on';
-  const safeQ = q ? q.replace(/[.,()]/g, '') : undefined;
+  const safeQ = q ? q.replace(/[.,()]/g, '').replace(/[%_\\]/g, '\\$&') : undefined;
 
   let query = db.from('jobs').select('*, job_skills(skill_uid, is_highlighted, skills(label))', { count: 'exact' });
 
@@ -69,8 +70,9 @@ app.get('/jobs/:id', async (c) => {
 
   let matchScore = null;
   if (profile) {
-    const jobSkillLabels = (job.job_skills || []).map((js: any) => js.skills?.label).filter(Boolean);
-    matchScore = computeMatchScore(job, jobSkillLabels, profile);
+    const jobSkills = (job.job_skills as JobWithSkills['job_skills']) ?? [];
+    const jobSkillLabels = jobSkills.map((js) => js.skills?.label).filter(Boolean) as string[];
+    matchScore = computeMatchScore(job as Job, jobSkillLabels, profile as UserProfile);
   }
 
   return c.json({ ...job, match_score: matchScore });

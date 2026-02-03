@@ -183,19 +183,75 @@
     if (data.jobs) {
       jobs = data.jobs;
     } else if (data.data) {
-      // GraphQL response - find the jobs array recursively
-      const str = JSON.stringify(data.data);
-      if (str.includes('"results"')) {
-        function findResults(obj) {
-          if (!obj || typeof obj !== "object") return null;
-          if (obj.results && Array.isArray(obj.results)) return obj.results;
-          for (const val of Object.values(obj)) {
-            const r = findResults(val);
-            if (r) return r;
+      // Check for job detail page (jobAuthDetails)
+      const opening = data.data.jobAuthDetails?.opening;
+      if (opening?.job?.info?.ciphertext) {
+        const info = opening.job.info;
+        const ca = opening.clientActivity || {};
+        // Build a job object from the detail response, merging clientActivity
+        const detailJob = {
+          uid: info.id || info.uid,
+          ciphertext: info.ciphertext,
+          title: info.title || "",
+          description: opening.job.description || "",
+          createdOn: info.createdOn || opening.job.postedOn,
+          publishedOn: opening.job.publishTime || opening.job.publishedOn || info.createdOn,
+          type: info.type === "HOURLY" ? 2 : 1,
+          durationLabel: opening.job.engagementDuration?.label || null,
+          engagement: opening.job.workload || null,
+          amount: info.type === "FIXED" ? opening.job.budget : null,
+          premium: info.premium || false,
+          tierText: opening.job.contractorTier || "",
+          isApplied: data.data.jobAuthDetails?.currentUserInfo?.freelancerInfo?.applied != null,
+          proposalsTier: null,
+          freelancersToHire: ca.numberOfPositionsToHire || 1,
+          attrs: (opening.job.sandsData?.ontologySkills || []).map(s => ({
+            uid: s.id || s.uid,
+            prefLabel: s.prefLabel,
+            prettyName: s.prefLabel,
+            highlighted: s.relevance === "MANDATORY"
+          })),
+          hourlyBudget: opening.job.extendedBudgetInfo ? {
+            min: opening.job.extendedBudgetInfo.hourlyBudgetMin || 0,
+            max: opening.job.extendedBudgetInfo.hourlyBudgetMax || 0
+          } : null,
+          client: {
+            location: { country: data.data.jobAuthDetails?.buyer?.info?.location?.country || "" },
+            isPaymentVerified: data.data.jobAuthDetails?.buyer?.isPaymentMethodVerified || false,
+            totalSpent: String(data.data.jobAuthDetails?.buyer?.info?.stats?.totalCharges?.amount || 0),
+            totalReviews: data.data.jobAuthDetails?.buyer?.info?.stats?.feedbackCount || 0,
+            totalFeedback: data.data.jobAuthDetails?.buyer?.info?.stats?.score || 0,
+            hasFinancialPrivacy: false
+          },
+          // Hiring activity fields
+          status: opening.job.status || null,
+          clientActivity: {
+            totalHired: ca.totalHired || 0,
+            totalApplicants: ca.totalApplicants || 0,
+            totalInvitedToInterview: ca.totalInvitedToInterview || 0,
+            invitationsSent: ca.invitationsSent || 0,
+            unansweredInvites: ca.unansweredInvites || 0,
+            lastBuyerActivity: ca.lastBuyerActivity || null,
+            numberOfPositionsToHire: ca.numberOfPositionsToHire || 1
           }
-          return null;
+        };
+        jobs = [detailJob];
+        console.log("[UpworkInsights] Job detail captured:", info.title, "| hired:", ca.totalHired, "| applicants:", ca.totalApplicants);
+      } else {
+        // Search results - find the jobs array recursively
+        const str = JSON.stringify(data.data);
+        if (str.includes('"results"')) {
+          function findResults(obj) {
+            if (!obj || typeof obj !== "object") return null;
+            if (obj.results && Array.isArray(obj.results)) return obj.results;
+            for (const val of Object.values(obj)) {
+              const r = findResults(val);
+              if (r) return r;
+            }
+            return null;
+          }
+          jobs = findResults(data.data) || [];
         }
-        jobs = findResults(data.data) || [];
       }
     }
 
@@ -204,8 +260,9 @@
       return;
     }
 
-    // Dedup check
-    const newJobs = jobs.filter(j => {
+    // Dedup check (skip dedup for job details with clientActivity - always update)
+    const hasActivity = jobs.some(j => j.clientActivity);
+    const newJobs = hasActivity ? jobs : jobs.filter(j => {
       const id = j.ciphertext || j.id || j.uid;
       if (capturedIds.has(id)) return false;
       capturedIds.add(id);

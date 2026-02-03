@@ -8,6 +8,16 @@ type Env = { Variables: { db: SupabaseClient; serviceDb: SupabaseClient } };
 
 const app = new Hono<Env>();
 
+function isValidRawJob(raw: unknown): raw is RawUpworkJob {
+  if (!raw || typeof raw !== 'object') return false;
+  const r = raw as Record<string, unknown>;
+  return (
+    typeof r.ciphertext === 'string' && r.ciphertext.length > 0 &&
+    typeof r.title === 'string' &&
+    typeof r.description === 'string'
+  );
+}
+
 async function upsertJobAndSkills(db: SupabaseClient, raw: RawUpworkJob, sourceUrl?: string | null) {
   const job = normalizeJob(raw, sourceUrl, null);
   const skills = extractSkills(raw);
@@ -15,14 +25,16 @@ async function upsertJobAndSkills(db: SupabaseClient, raw: RawUpworkJob, sourceU
   // Check if job already exists to detect changes
   const { data: existing } = await db
     .from('jobs')
-    .select('id, proposals_tier, freelancers_to_hire, is_applied')
+    .select('id, proposals_tier, freelancers_to_hire, is_applied, total_hired, total_applicants')
     .eq('ciphertext', job.ciphertext)
     .single();
 
   const shouldSnapshot = !existing ||
     existing.proposals_tier !== job.proposals_tier ||
     existing.freelancers_to_hire !== job.freelancers_to_hire ||
-    existing.is_applied !== job.is_applied;
+    existing.is_applied !== job.is_applied ||
+    (job.total_hired > 0 && existing.total_hired !== job.total_hired) ||
+    (job.total_applicants && existing.total_applicants !== job.total_applicants);
 
   let jobId: number;
 
@@ -97,14 +109,15 @@ async function upsertJobAndSkills(db: SupabaseClient, raw: RawUpworkJob, sourceU
     });
   }
 
-  for (const skill of skills) {
-    await db.from('skills').upsert({ uid: skill.uid, label: skill.label }, { onConflict: 'uid' });
-    await db
-      .from('job_skills')
-      .upsert(
-        { job_id: jobId, skill_uid: skill.uid, is_highlighted: skill.is_highlighted },
-        { onConflict: 'job_id,skill_uid' }
-      );
+  if (skills.length > 0) {
+    await db.from('skills').upsert(
+      skills.map((s) => ({ uid: s.uid, label: s.label })),
+      { onConflict: 'uid' }
+    );
+    await db.from('job_skills').upsert(
+      skills.map((s) => ({ job_id: jobId, skill_uid: s.uid, is_highlighted: s.is_highlighted })),
+      { onConflict: 'job_id,skill_uid' }
+    );
   }
 
   return { isNew: !existing };
@@ -123,6 +136,10 @@ app.post('/ingest', requireApiKey(), async (c) => {
   let errors = 0;
 
   for (const raw of payload.jobs) {
+    if (!isValidRawJob(raw)) {
+      errors++;
+      continue;
+    }
     try {
       const result = await upsertJobAndSkills(db, raw, payload.url);
       if (result.isNew) inserted++;
@@ -160,10 +177,15 @@ app.post('/import/bulk', requireApiKey(), async (c) => {
   let errors = 0;
 
   for (const raw of allJobs) {
+    if (!isValidRawJob(raw)) {
+      errors++;
+      continue;
+    }
     try {
       await upsertJobAndSkills(db, raw, sourceUrl);
       inserted++;
     } catch (e) {
+      console.error('Bulk import error:', e);
       errors++;
     }
   }
