@@ -1,5 +1,6 @@
 <script lang="ts">
   import { api } from '../lib/api';
+  import { formatMoney, formatDateShort } from '../lib/format';
   import StatCard from '../components/StatCard.svelte';
   import LineChart from '../components/LineChart.svelte';
   import BarChart from '../components/BarChart.svelte';
@@ -28,15 +29,12 @@
       stats = {
         total: String(data.total_jobs),
         today: String(data.jobs_today),
-        budget: `$${data.avg_fixed_budget.toLocaleString()}`,
+        budget: formatMoney(data.avg_fixed_budget),
         types: `${data.fixed_count} / ${data.hourly_count}`,
       };
 
       if (trends.trends?.length > 0) {
-        trendLabels = trends.trends.map((t: any) => {
-          const d = new Date(t.date);
-          return `${d.getMonth() + 1}/${d.getDate()}`;
-        });
+        trendLabels = trends.trends.map((t: any) => formatDateShort(t.date));
         trendDatasets = [
           { label: 'Total Jobs', data: trends.trends.map((t: any) => t.total_jobs), color: 'rgba(59, 130, 246, 0.8)' },
           { label: 'Fixed', data: trends.trends.map((t: any) => t.fixed_count), color: 'rgba(34, 197, 94, 0.8)' },

@@ -2,7 +2,7 @@
   import { link } from 'svelte-spa-router';
   import { Collapsible, Meter, Progress, Separator } from "bits-ui";
   import { api } from '../lib/api';
-  import { formatProposals, formatBudget, proposalMidpoint, tierColor, scoreColor, matchBarColor } from '../lib/format';
+  import { formatProposals, formatBudget, proposalMidpoint, tierColor, scoreColor, matchBarColor, formatScore, formatMoney, formatDateTime, formatDate, formatDateTimeShort } from '../lib/format';
   import LineChart from '../components/LineChart.svelte';
   import TierBadge from '../components/TierBadge.svelte';
   import SkillTag from '../components/SkillTag.svelte';
@@ -21,8 +21,8 @@
 
   let budget = $derived(job ? formatBudget(job) : '');
 
-  let score = $derived(job?.client_quality_score ? parseFloat(job.client_quality_score).toFixed(1) : '-');
-  let scColor = $derived(scoreColor(parseFloat(score)));
+  let score = $derived(formatScore(job?.client_quality_score, 10));
+  let scColor = $derived(scoreColor(parseFloat(String(job?.client_quality_score)) || 0));
 
   let matchColor = $derived(
     job?.match_score >= 70 ? 'text-green-400' : job?.match_score >= 40 ? 'text-yellow-400' : 'text-gray-400'
@@ -48,10 +48,7 @@
       const snapshots = historyData.snapshots || [];
       if (snapshots.length > 1) {
         hasHistory = true;
-        historyLabels = snapshots.map((s: any) => {
-          const d = new Date(s.snapshot_at);
-          return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
-        });
+        historyLabels = snapshots.map((s: any) => formatDateTimeShort(s.snapshot_at));
         historyDatasets = [{
           label: 'Est. Proposals',
           data: snapshots.map((s: any) => proposalMidpoint(s.proposals_tier)),
@@ -114,7 +111,7 @@
       {#if job.job_status}
         <span class="{job.job_status === 'ACTIVE' ? 'text-green-400' : 'text-red-400'}">{job.job_status}</span>
       {/if}
-      <span class="text-gray-500">{new Date(job.created_on).toLocaleDateString()}</span>
+      <span class="text-gray-500">{formatDate(job.created_on)}</span>
     </div>
     <div class="flex flex-wrap gap-2 mb-4">
       {#each skills as s}
@@ -158,10 +155,10 @@
           </Meter.Root>
         </div>
         <div class="flex justify-between"><span class="text-gray-400">Payment Verified</span><span>{#if job.client_payment_verified}<span class="text-green-400">Yes</span>{:else}<span class="text-red-400">No</span>{/if}</span></div>
-        <div class="flex justify-between"><span class="text-gray-400">Total Spent</span><span class="text-gray-200">${(parseFloat(job.client_total_spent) || 0).toLocaleString()}</span></div>
+        <div class="flex justify-between"><span class="text-gray-400">Total Spent</span><span class="text-gray-200">{formatMoney(job.client_total_spent)}</span></div>
         <div class="flex justify-between"><span class="text-gray-400">Reviews</span><span class="text-gray-200">{job.client_total_reviews || 0}</span></div>
         <div>
-          <div class="flex justify-between mb-1"><span class="text-gray-400">Feedback</span><span class="text-gray-200">{job.client_total_feedback ? parseFloat(job.client_total_feedback).toFixed(1) : '-'}/5</span></div>
+          <div class="flex justify-between mb-1"><span class="text-gray-400">Feedback</span><span class="text-gray-200">{formatScore(job.client_total_feedback, 5)}</span></div>
           {#if job.client_total_feedback}
             <Meter.Root
               value={Number(job.client_total_feedback) || 0}
@@ -179,8 +176,8 @@
             </Meter.Root>
           {/if}
         </div>
-        <div class="flex justify-between"><span class="text-gray-400">First Seen</span><span class="text-gray-200">{job.first_seen_at ? new Date(job.first_seen_at).toLocaleString() : '-'}</span></div>
-        <div class="flex justify-between"><span class="text-gray-400">Last Seen</span><span class="text-gray-200">{job.last_seen_at ? new Date(job.last_seen_at).toLocaleString() : '-'}</span></div>
+        <div class="flex justify-between"><span class="text-gray-400">First Seen</span><span class="text-gray-200">{formatDateTime(job.first_seen_at)}</span></div>
+        <div class="flex justify-between"><span class="text-gray-400">Last Seen</span><span class="text-gray-200">{formatDateTime(job.last_seen_at)}</span></div>
         {#if job.total_hired > 0 || job.total_applicants || job.invitations_sent > 0}
           <Separator.Root class="bg-gray-700 h-px my-3" />
           <Collapsible.Root open={true}>
@@ -205,7 +202,7 @@
                 <div class="flex justify-between"><span class="text-gray-400">Invites Sent</span><span class="text-gray-200">{job.invitations_sent}</span></div>
               {/if}
               {#if job.last_buyer_activity}
-                <div class="flex justify-between"><span class="text-gray-400">Client Last Active</span><span class="text-gray-200">{new Date(job.last_buyer_activity).toLocaleDateString()}</span></div>
+                <div class="flex justify-between"><span class="text-gray-400">Client Last Active</span><span class="text-gray-200">{formatDate(job.last_buyer_activity)}</span></div>
               {/if}
             </Collapsible.Content>
           </Collapsible.Root>

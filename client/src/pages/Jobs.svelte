@@ -1,7 +1,7 @@
 <script lang="ts">
   import { link } from 'svelte-spa-router';
   import { api } from '../lib/api';
-  import { formatProposals, formatBudget, tierColor, scoreColor, formatDate } from '../lib/format';
+  import { formatProposals, formatBudget, tierColor, scoreColor, formatDate, formatScore } from '../lib/format';
   import TierBadge from '../components/TierBadge.svelte';
   import SkillTag from '../components/SkillTag.svelte';
   import Pagination from '../components/Pagination.svelte';
@@ -93,8 +93,10 @@
   }
 
   function clientScore(job: any): { text: string; color: string } {
-    const score = job.client_quality_score ? parseFloat(job.client_quality_score).toFixed(1) : '-';
-    return { text: `${score}/10`, color: scoreColor(parseFloat(score)) };
+    return {
+      text: formatScore(job.client_quality_score, 10),
+      color: scoreColor(parseFloat(String(job.client_quality_score)) || 0),
+    };
   }
 
   let countryOptions = $derived([
@@ -116,7 +118,6 @@
     { key: 'job_type', label: 'Type', width: 'w-24' },
     { key: 'client_country', label: 'Country', width: 'w-32' },
     { key: 'proposals_tier', label: 'Proposals', width: 'w-28' },
-    { key: 'total_hired', label: 'Hiring', width: 'w-24' },
     { key: 'client_quality_score', label: 'Client', width: 'w-24' },
     { key: 'created_on', label: 'Date', width: 'w-28' },
   ];
@@ -181,7 +182,7 @@
         </thead>
         <tbody class="divide-y divide-gray-800">
           {#if jobs.length === 0}
-            <tr><td colspan="9" class="text-center text-gray-500 py-12">No jobs found</td></tr>
+            <tr><td colspan="8" class="text-center text-gray-500 py-12">No jobs found</td></tr>
           {:else}
             {#each jobs as job}
               {@const skills = jobSkills(job)}
@@ -190,7 +191,7 @@
                 <td class="px-4 py-3">
                   <div class="flex items-center gap-2">
                     <UiTooltip text={job.title}>
-                      <a href="/jobs/{job.id}" use:link class="font-medium text-gray-100 hover:text-blue-400 truncate max-w-md block transition-colors">{job.title}</a>
+                      <a href="/jobs/{job.id}" use:link class="font-medium text-gray-100 hover:text-blue-400 truncate max-w-md min-w-0 transition-colors">{job.title}</a>
                     </UiTooltip>
                     {#if job.ciphertext}
                       <a href="https://www.upwork.com/jobs/{job.ciphertext}" target="_blank" rel="noopener" class="text-gray-600 hover:text-blue-400 shrink-0" title="View on Upwork">&#8599;</a>
@@ -208,15 +209,6 @@
                 <td class="px-4 py-3 text-gray-400 capitalize">{job.job_type}</td>
                 <td class="px-4 py-3 text-gray-400">{job.client_country || '-'}</td>
                 <td class="px-4 py-3 text-gray-400">{job.total_applicants ? job.total_applicants : formatProposals(job.proposals_tier)}</td>
-                <td class="px-4 py-3 whitespace-nowrap">
-                  {#if job.total_hired > 0}
-                    <span class="text-orange-400">{job.total_hired} hired</span>
-                  {:else if job.job_status === 'CLOSED'}
-                    <span class="text-red-400">Closed</span>
-                  {:else}
-                    <span class="text-green-400/60">Open</span>
-                  {/if}
-                </td>
                 <td class="px-4 py-3 {cs.color} font-medium">{cs.text}</td>
                 <td class="px-4 py-3 text-gray-400 whitespace-nowrap">{formatDate(job.created_on)}</td>
               </tr>
