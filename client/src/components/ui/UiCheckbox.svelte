@@ -4,9 +4,11 @@
   let {
     label,
     checked = $bindable(false),
+    onCheckedChange,
   }: {
     label: string;
     checked?: boolean;
+    onCheckedChange?: (checked: boolean) => void;
   } = $props();
 
   const id = useId();
@@ -15,6 +17,7 @@
 <div class="flex items-center gap-2">
   <Checkbox.Root
     bind:checked
+    {onCheckedChange}
     {id}
     class="size-5 rounded border border-gray-600 bg-gray-800
            data-[checked]:bg-blue-600 data-[checked]:border-blue-600
