@@ -57,13 +57,14 @@ export function matchBarColor(score: number): string {
 
 export function formatDate(dateStr: string | null): string {
   if (!dateStr) return '-';
-  return new Date(dateStr).toLocaleDateString();
+  const d = new Date(dateStr);
+  return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()}`;
 }
 
 export function formatDateShort(dateStr: string | null): string {
   if (!dateStr) return '-';
   const d = new Date(dateStr);
-  return `${d.getMonth() + 1}/${d.getDate()}`;
+  return `${d.getDate()}/${d.getMonth() + 1}`;
 }
 
 export function formatScore(value: string | number | null, max: number = 10): string {
@@ -78,10 +79,11 @@ export function formatMoney(value: string | number | null): string {
 
 export function formatDateTime(dateStr: string | null): string {
   if (!dateStr) return '-';
-  return new Date(dateStr).toLocaleString();
+  const d = new Date(dateStr);
+  return `${String(d.getDate()).padStart(2, '0')}/${String(d.getMonth() + 1).padStart(2, '0')}/${d.getFullYear()} ${String(d.getHours()).padStart(2, '0')}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
 
 export function formatDateTimeShort(dateStr: string): string {
   const d = new Date(dateStr);
-  return `${d.getMonth() + 1}/${d.getDate()} ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
+  return `${d.getDate()}/${d.getMonth() + 1} ${d.getHours()}:${String(d.getMinutes()).padStart(2, '0')}`;
 }
