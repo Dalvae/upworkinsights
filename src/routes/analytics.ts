@@ -2,7 +2,6 @@ import { Hono } from 'hono';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { computeMatchScore } from '../lib/matching';
 import { proposalMidpoint } from '../lib/constants';
-import { BLOCKED_COUNTRIES } from '../lib/normalize';
 import type { Job, JobWithSkills, UserProfile } from '../types';
 
 type Env = { Variables: { db: SupabaseClient } };
@@ -53,11 +52,9 @@ app.get('/analytics/matches', async (c) => {
   const { data: profile } = await db.from('user_profile').select('*').limit(1).single();
   if (!profile) return c.json({ error: 'No profile configured' }, 400);
 
-  let matchQuery = db
+  const { data: jobs } = await db
     .from('jobs')
-    .select('id, title, tier, job_type, fixed_budget, hourly_min, hourly_max, client_quality_score, client_country, client_total_spent, client_payment_verified, client_total_feedback, proposals_tier, duration, engagement, job_skills(skill_uid, skills(label))');
-  for (const bc of BLOCKED_COUNTRIES) matchQuery = matchQuery.neq('client_country', bc);
-  const { data: jobs } = await matchQuery
+    .select('id, title, tier, job_type, fixed_budget, hourly_min, hourly_max, client_quality_score, client_country, client_total_spent, client_payment_verified, client_total_feedback, proposals_tier, duration, engagement, job_skills(skill_uid, skills(label))')
     .order('created_on', { ascending: false })
     .limit(200);
 
@@ -123,11 +120,9 @@ interface JobVelocity {
 app.get('/analytics/proposals', async (c) => {
   const db = c.get('db');
 
-  let proposalQuery = db
+  const { data: jobs } = await db
     .from('jobs')
-    .select('id, ciphertext, title, tier, job_type, fixed_budget, hourly_max, created_on, proposals_tier, first_seen_at');
-  for (const bc of BLOCKED_COUNTRIES) proposalQuery = proposalQuery.neq('client_country', bc);
-  const { data: jobs } = await proposalQuery
+    .select('id, ciphertext, title, tier, job_type, fixed_budget, hourly_max, created_on, proposals_tier, first_seen_at')
     .order('created_on', { ascending: false })
     .limit(500);
 

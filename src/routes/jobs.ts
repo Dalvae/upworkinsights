@@ -1,7 +1,6 @@
 import { Hono } from 'hono';
 import type { SupabaseClient } from '@supabase/supabase-js';
 import { computeMatchScore } from '../lib/matching';
-import { BLOCKED_COUNTRIES } from '../lib/normalize';
 import type { Job, JobWithSkills, UserProfile } from '../types';
 
 type Env = { Variables: { db: SupabaseClient } };
@@ -31,11 +30,6 @@ app.get('/jobs', async (c) => {
   const safeQ = q ? q.replace(/[.,()]/g, '').replace(/[%_\\]/g, '\\$&') : undefined;
 
   let query = db.from('jobs').select('*, job_skills(skill_uid, is_highlighted, skills(label))', { count: 'exact' });
-
-  // Exclude blocked countries
-  for (const bc of BLOCKED_COUNTRIES) {
-    query = query.neq('client_country', bc);
-  }
 
   if (tier) query = query.eq('tier', tier);
   if (job_type) query = query.eq('job_type', job_type);
@@ -70,7 +64,6 @@ app.get('/jobs/countries', async (c) => {
   const counts: Record<string, number> = {};
   for (const row of data ?? []) {
     const country = row.client_country as string;
-    if (BLOCKED_COUNTRIES.has(country)) continue;
     counts[country] = (counts[country] || 0) + 1;
   }
 
