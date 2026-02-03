@@ -1,5 +1,5 @@
 <script lang="ts">
-  import type { Chart } from 'chart.js/auto';
+  import type { Chart } from 'chart.js';
   import { createLineChart } from '../lib/charts';
   import { untrack } from 'svelte';
 

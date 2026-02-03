@@ -1,5 +1,5 @@
 import { mount } from 'svelte';
-import { Chart } from 'chart.js/auto';
+import { Chart } from 'chart.js';
 import App from './App.svelte';
 import './app.css';
 
