@@ -1,10 +1,5 @@
 import { Chart } from 'chart.js/auto';
 
-// Set global dark theme defaults
-Chart.defaults.color = '#9ca3af'; // gray-400
-Chart.defaults.borderColor = '#374151'; // gray-700
-Chart.defaults.font.family = 'system-ui, sans-serif';
-
 export function createBarChart(
   canvas: HTMLCanvasElement,
   labels: string[],
@@ -15,7 +10,7 @@ export function createBarChart(
     label?: string;
   }
 ): Chart {
-  const color = options?.color || 'rgba(59, 130, 246, 0.8)'; // blue-500
+  const color = options?.color || 'rgba(59, 130, 246, 0.8)';
   const horizontal = options?.horizontal || false;
   const label = options?.label || 'Data';
 
@@ -37,16 +32,8 @@ export function createBarChart(
       responsive: true,
       maintainAspectRatio: false,
       scales: {
-        x: {
-          grid: {
-            display: !horizontal,
-          },
-        },
-        y: {
-          grid: {
-            display: horizontal,
-          },
-        },
+        x: { grid: { display: !horizontal } },
+        y: { grid: { display: horizontal } },
       },
     },
   });
@@ -59,12 +46,12 @@ export function createDoughnutChart(
   colors?: string[]
 ): Chart {
   const defaultColors = [
-    'rgba(168, 85, 247, 0.8)', // purple-500
-    'rgba(59, 130, 246, 0.8)', // blue-500
-    'rgba(34, 197, 94, 0.8)', // green-500
-    'rgba(234, 179, 8, 0.8)', // yellow-500
-    'rgba(239, 68, 68, 0.8)', // red-500
-    'rgba(6, 182, 212, 0.8)', // cyan-500
+    'rgba(168, 85, 247, 0.8)',
+    'rgba(59, 130, 246, 0.8)',
+    'rgba(34, 197, 94, 0.8)',
+    'rgba(234, 179, 8, 0.8)',
+    'rgba(239, 68, 68, 0.8)',
+    'rgba(6, 182, 212, 0.8)',
   ];
 
   return new Chart(canvas, {
@@ -84,9 +71,7 @@ export function createDoughnutChart(
       maintainAspectRatio: false,
       cutout: '60%',
       plugins: {
-        legend: {
-          position: 'right',
-        },
+        legend: { position: 'right' },
       },
     },
   });
@@ -109,7 +94,7 @@ export function createLineChart(
         label: ds.label,
         data: ds.data,
         borderColor: ds.color,
-        backgroundColor: ds.color.replace(/[\d.]+\)$/g, '0.1)'), // Set alpha to 0.1 for fill
+        backgroundColor: ds.color.replace(/[\d.]+\)$/g, '0.1)'),
         tension: 0.3,
         fill: true,
         pointRadius: 2,
@@ -119,16 +104,8 @@ export function createLineChart(
       responsive: true,
       maintainAspectRatio: false,
       scales: {
-        x: {
-          grid: {
-            display: true,
-          },
-        },
-        y: {
-          grid: {
-            display: true,
-          },
-        },
+        x: { grid: { display: true } },
+        y: { grid: { display: true } },
       },
     },
   });

@@ -6,7 +6,6 @@ import ingestRoutes from './routes/ingest';
 import jobRoutes from './routes/jobs';
 import analyticsRoutes from './routes/analytics';
 import profileRoutes from './routes/profile';
-import pageRoutes from './routes/pages';
 
 type Bindings = {
   SUPABASE_URL: string;
@@ -48,7 +47,6 @@ app.route('/api', ingestRoutes);
 app.route('/api', jobRoutes);
 app.route('/api', analyticsRoutes);
 app.route('/api', profileRoutes);
-app.route('/', pageRoutes);
 
 export default {
   port: 8787,

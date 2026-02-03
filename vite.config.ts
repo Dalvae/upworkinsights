@@ -1,31 +1,15 @@
 import { defineConfig } from 'vite';
+import { svelte } from '@sveltejs/vite-plugin-svelte';
 import tailwindcss from '@tailwindcss/vite';
-import { resolve } from 'path';
 
 export default defineConfig({
-  plugins: [tailwindcss()],
+  plugins: [svelte(), tailwindcss()],
+  root: 'client',
   build: {
-    outDir: 'dist/client/static',
+    outDir: '../dist/client',
     emptyOutDir: true,
-    rollupOptions: {
-      input: {
-        dashboard: resolve(__dirname, 'client/dashboard.ts'),
-        jobs: resolve(__dirname, 'client/jobs.ts'),
-        'job-detail': resolve(__dirname, 'client/job-detail.ts'),
-        analytics: resolve(__dirname, 'client/analytics.ts'),
-        profile: resolve(__dirname, 'client/profile.ts'),
-        styles: resolve(__dirname, 'public/styles.css'),
-      },
-      output: {
-        entryFileNames: '[name].js',
-        chunkFileNames: 'chunks/[name]-[hash].js',
-        assetFileNames: '[name][extname]',
-      },
-    },
   },
-  resolve: {
-    alias: {
-      '@': resolve(__dirname, './src'),
-    },
+  server: {
+    proxy: { '/api': 'http://localhost:8787' },
   },
 });

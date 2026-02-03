@@ -63,6 +63,21 @@ async function upsertJobAndSkills(db: SupabaseClient, raw: RawUpworkJob, sourceU
       client_quality_score: job.client_quality_score,
       source_url: job.source_url,
       search_query: job.search_query,
+      ...(job.job_status && { job_status: job.job_status }),
+      ...(job.total_hired > 0 && { total_hired: job.total_hired }),
+      ...(job.total_applicants && { total_applicants: job.total_applicants }),
+      ...(job.total_invited_to_interview > 0 && { total_invited_to_interview: job.total_invited_to_interview }),
+      ...(job.invitations_sent > 0 && { invitations_sent: job.invitations_sent }),
+      ...(job.unanswered_invites > 0 && { unanswered_invites: job.unanswered_invites }),
+      ...(job.last_buyer_activity && { last_buyer_activity: job.last_buyer_activity }),
+      ...(job.client_total_assignments != null && { client_total_assignments: job.client_total_assignments }),
+      ...(job.client_active_assignments != null && { client_active_assignments: job.client_active_assignments }),
+      ...(job.client_total_jobs_with_hires != null && { client_total_jobs_with_hires: job.client_total_jobs_with_hires }),
+      ...(job.client_open_jobs != null && { client_open_jobs: job.client_open_jobs }),
+      ...(job.qualifications != null && { qualifications: job.qualifications }),
+      ...(job.segmentation_data != null && { segmentation_data: job.segmentation_data }),
+      ...(job.tools != null && { tools: job.tools }),
+      ...(job.qualification_matches != null && { qualification_matches: job.qualification_matches }),
     }).eq('id', existing.id);
     if (updateError) throw updateError;
     jobId = existing.id;
@@ -94,6 +109,21 @@ async function upsertJobAndSkills(db: SupabaseClient, raw: RawUpworkJob, sourceU
       client_quality_score: job.client_quality_score,
       source_url: job.source_url,
       search_query: job.search_query,
+      job_status: job.job_status,
+      total_hired: job.total_hired,
+      total_applicants: job.total_applicants,
+      total_invited_to_interview: job.total_invited_to_interview,
+      invitations_sent: job.invitations_sent,
+      unanswered_invites: job.unanswered_invites,
+      last_buyer_activity: job.last_buyer_activity,
+      client_total_assignments: job.client_total_assignments,
+      client_active_assignments: job.client_active_assignments,
+      client_total_jobs_with_hires: job.client_total_jobs_with_hires,
+      client_open_jobs: job.client_open_jobs,
+      qualifications: job.qualifications,
+      segmentation_data: job.segmentation_data,
+      tools: job.tools,
+      qualification_matches: job.qualification_matches,
     }).select('id').single();
     if (insertError) throw insertError;
     jobId = inserted!.id;
@@ -106,6 +136,8 @@ async function upsertJobAndSkills(db: SupabaseClient, raw: RawUpworkJob, sourceU
       proposals_tier: job.proposals_tier,
       freelancers_to_hire: job.freelancers_to_hire,
       is_applied: job.is_applied,
+      total_hired: job.total_hired || null,
+      total_applicants: job.total_applicants || null,
     });
   }
 

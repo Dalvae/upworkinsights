@@ -48,6 +48,15 @@ export interface RawUpworkJob {
     lastBuyerActivity?: string;
     numberOfPositionsToHire?: number;
   } | null;
+  // From jobAuthDetails (buyer stats & job metadata)
+  clientTotalAssignments?: number | null;
+  clientActiveAssignments?: number | null;
+  clientTotalJobsWithHires?: number | null;
+  clientOpenJobs?: number | null;
+  qualifications?: unknown[] | null;
+  segmentationData?: unknown[] | null;
+  tools?: unknown[] | null;
+  qualificationMatches?: unknown[] | null;
 }
 
 export type JobType = 'fixed' | 'hourly';
@@ -89,6 +98,15 @@ export interface Job {
   invitations_sent: number;
   unanswered_invites: number;
   last_buyer_activity: string | null;
+  // From jobAuthDetails (buyer stats & job metadata)
+  client_total_assignments: number | null;
+  client_active_assignments: number | null;
+  client_total_jobs_with_hires: number | null;
+  client_open_jobs: number | null;
+  qualifications: unknown[] | null;
+  segmentation_data: unknown[] | null;
+  tools: unknown[] | null;
+  qualification_matches: unknown[] | null;
 }
 
 export type JobRow = Job & { id: number; first_seen_at: string; last_seen_at: string };

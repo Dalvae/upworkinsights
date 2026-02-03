@@ -223,6 +223,16 @@
             totalFeedback: data.data.jobAuthDetails?.buyer?.info?.stats?.score || 0,
             hasFinancialPrivacy: false
           },
+          // Buyer stats
+          clientTotalAssignments: data.data.jobAuthDetails?.buyer?.info?.stats?.totalAssignments ?? null,
+          clientActiveAssignments: data.data.jobAuthDetails?.buyer?.info?.stats?.activeAssignmentsCount ?? null,
+          clientTotalJobsWithHires: data.data.jobAuthDetails?.buyer?.info?.stats?.totalJobsWithHires ?? null,
+          clientOpenJobs: data.data.jobAuthDetails?.buyer?.info?.jobs?.openCount ?? null,
+          // Job qualifications & metadata
+          qualifications: opening.job.qualifications || null,
+          segmentationData: opening.job.segmentationData || null,
+          tools: opening.job.tools || null,
+          qualificationMatches: data.data.jobAuthDetails?.currentUserInfo?.freelancerInfo?.qualificationsMatches || null,
           // Hiring activity fields
           status: opening.job.status || null,
           clientActivity: {

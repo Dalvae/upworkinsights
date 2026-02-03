@@ -36,6 +36,10 @@ export function normalizeJob(raw: RawUpworkJob, sourceUrl?: string | null, searc
       totalReviews: raw.client?.totalReviews,
       totalFeedback: raw.client?.totalFeedback,
       isPaymentVerified: raw.client?.isPaymentVerified,
+      totalAssignments: raw.clientTotalAssignments,
+      totalJobsWithHires: raw.clientTotalJobsWithHires,
+      activeAssignments: raw.clientActiveAssignments,
+      openJobs: raw.clientOpenJobs,
     }),
     source_url: sourceUrl || null,
     search_query: searchQuery || null,
@@ -46,6 +50,14 @@ export function normalizeJob(raw: RawUpworkJob, sourceUrl?: string | null, searc
     invitations_sent: raw.clientActivity?.invitationsSent ?? 0,
     unanswered_invites: raw.clientActivity?.unansweredInvites ?? 0,
     last_buyer_activity: raw.clientActivity?.lastBuyerActivity || null,
+    client_total_assignments: raw.clientTotalAssignments ?? null,
+    client_active_assignments: raw.clientActiveAssignments ?? null,
+    client_total_jobs_with_hires: raw.clientTotalJobsWithHires ?? null,
+    client_open_jobs: raw.clientOpenJobs ?? null,
+    qualifications: raw.qualifications ?? null,
+    segmentation_data: raw.segmentationData ?? null,
+    tools: raw.tools ?? null,
+    qualification_matches: raw.qualificationMatches ?? null,
   };
 }
 
