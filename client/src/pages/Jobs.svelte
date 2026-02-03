@@ -8,6 +8,7 @@
   import UiSelect from '../components/ui/UiSelect.svelte';
   import UiCombobox from '../components/ui/UiCombobox.svelte';
   import { ScrollArea } from "bits-ui";
+  import UiTooltip from '../components/ui/UiTooltip.svelte';
 
   let currentPage = $state(1);
   let currentSort = $state('created_on');
@@ -188,7 +189,9 @@
               <tr class="hover:bg-gray-800/50 transition-colors">
                 <td class="px-4 py-3">
                   <div class="flex items-center gap-2">
-                    <a href="/jobs/{job.id}" use:link class="font-medium text-gray-100 hover:text-blue-400 truncate max-w-md block transition-colors" title={job.title}>{job.title}</a>
+                    <UiTooltip text={job.title}>
+                      <a href="/jobs/{job.id}" use:link class="font-medium text-gray-100 hover:text-blue-400 truncate max-w-md block transition-colors">{job.title}</a>
+                    </UiTooltip>
                     {#if job.ciphertext}
                       <a href="https://www.upwork.com/jobs/{job.ciphertext}" target="_blank" rel="noopener" class="text-gray-600 hover:text-blue-400 shrink-0" title="View on Upwork">&#8599;</a>
                     {/if}
